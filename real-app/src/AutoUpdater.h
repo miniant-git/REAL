@@ -17,6 +17,8 @@ private:
     Version m_currentVersion;
 
     std::filesystem::path m_executable;
+
+    bool UpdateUpdater() const;
 };
 
 }

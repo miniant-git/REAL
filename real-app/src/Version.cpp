@@ -5,9 +5,13 @@
 
 using namespace miniant::WasapiLatency;
 
+const std::regex VERSION_PATTERN(
+    R"(v(\d+)\.(\d+)\.(\d+))",
+    std::regex_constants::ECMAScript | std::regex_constants::optimize);
+
 std::string Version::ToString() const {
     std::stringstream ss;
-    ss << m_major << '.' << m_minor << '.' << m_patch;
+    ss << 'v' << m_major << '.' << m_minor << '.' << m_patch;
     return ss.str();
 }
 
@@ -42,9 +46,8 @@ bool Version::operator>=(const Version& rhs) const {
 }
 
 std::optional<Version> Version::Parse(const std::string& versionString) {
-    std::regex pattern(R"(^(\d+)\.(\d+)\.(\d+)$)");
     std::smatch matches;
-    if (!std::regex_match(versionString, matches, pattern))
+    if (!std::regex_match(versionString, matches, VERSION_PATTERN))
         return {};
 
     int major = std::stoi(matches[1].str());
@@ -57,4 +60,12 @@ std::optional<Version> Version::Parse(const std::string& versionString) {
         static_cast<uint16_t>(major),
         static_cast<uint16_t>(minor),
         static_cast<uint16_t>(patch)) };
+}
+
+std::optional<Version> miniant::WasapiLatency::Version::Find(const std::string& string) {
+    std::smatch matches;
+    if (!std::regex_search(string, matches, VERSION_PATTERN))
+        return {};
+
+    return Version::Parse(matches[0].str());
 }

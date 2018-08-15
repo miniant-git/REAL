@@ -50,24 +50,28 @@ AutoUpdater::~AutoUpdater() {
 }
 
 bool AutoUpdater::Update() const {
+    if (this->UpdateUpdater())
+        return true;
+
     CURL* curl = curl_easy_init();
     if (curl == nullptr)
         return false;
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/miniant-git/REAL/releases/latest");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "real_updater_v1");
 
     Buffer buffer;
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, PopulateBuffer);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "real_updater");
 
-    CURLcode responseCode = curl_easy_perform(curl);
-    if (responseCode != CURLE_OK) {
+    CURLcode status = curl_easy_perform(curl);
+    if (status != CURLE_OK) {
         std::cout << "Could not access the update server." << std::endl;
         curl_easy_cleanup(curl);
         return false;
     }
 
+    long responseCode;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
     if (responseCode != 200) {
         std::cout << "Check for updates failed." << std::endl;
@@ -94,7 +98,6 @@ bool AutoUpdater::Update() const {
         curl_easy_cleanup(curl);
         return false;
     }
-
 
     std::optional<const json*> executable = FindExecutableAsset(response);
     if (!executable) {
@@ -125,6 +128,85 @@ bool AutoUpdater::Update() const {
     } catch (std::filesystem::filesystem_error& error) {
         std::cout << "Error: " << error.what() << std::endl;
         return false;
+    }
+
+    std::cout << "Updated successfully! Restart the application to apply changes." << std::endl;
+    return true;
+}
+
+bool AutoUpdater::UpdateUpdater() const {
+    CURL* curl = curl_easy_init();
+    if (curl == nullptr)
+        return false;
+
+    curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v2");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "real_updater_v1");
+
+    Buffer buffer;
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, PopulateBuffer);
+
+    CURLcode status = curl_easy_perform(curl);
+    if (status != CURLE_OK) {
+        curl_easy_cleanup(curl);
+        return false;
+    }
+
+    long responseCode;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    if (responseCode != 200) {
+        curl_easy_cleanup(curl);
+        return false;
+    }
+
+    json response = json::parse(buffer);
+    std::optional<Version> version = Version::Find(response["name"]);
+    if (!version) {
+        curl_easy_cleanup(curl);
+        return false;
+    }
+
+    std::cout << "A new update is available!" << std::endl
+        << "Do you want to update to version " << version.value().ToString() << "? [y/N]: ";
+    char line[5];
+    std::cin.getline(line, 5);
+    std::string prompt(line);
+    std::transform(prompt.begin(), prompt.end(), prompt.begin(), std::tolower);
+    if (prompt != "y" && prompt != "yes") {
+        std::cout << "No: Keeping the current version." << std::endl;
+        curl_easy_cleanup(curl);
+        return true;
+    }
+
+    std::optional<const json*> executable = FindExecutableAsset(response);
+    if (!executable) {
+        std::cout << "Error: misconfigured update assets." << std::endl;
+        curl_easy_cleanup(curl);
+        return true;
+    }
+
+    std::filesystem::path tempExecutable(m_executable.string() + "~TEMP");
+
+    const char* url = static_cast<std::string>((*executable.value())["browser_download_url"]).c_str();
+    FILE* executableFile;
+    fopen_s(&executableFile, tempExecutable.string().c_str(), "wb");
+    curl_easy_reset(curl);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, executableFile);
+
+    std::cout << "Downloading update..." << std::endl;
+    curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    fclose(executableFile);
+
+    try {
+        std::filesystem::rename(m_executable, m_executable.string() + "~DELETE");
+        std::filesystem::rename(tempExecutable, m_executable);
+    } catch (std::filesystem::filesystem_error& error) {
+        std::cout << "Error: " << error.what() << std::endl;
+        return true;
     }
 
     std::cout << "Updated successfully! Restart the application to apply changes." << std::endl;

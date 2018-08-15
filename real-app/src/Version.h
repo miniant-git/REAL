@@ -21,6 +21,7 @@ public:
     bool operator>=(const Version& rhs) const;
 
     static std::optional<Version> Parse(const std::string& versionString);
+    static std::optional<Version> Find(const std::string& string);
 
 private:
     uint16_t m_major;
