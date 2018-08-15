@@ -17,7 +17,7 @@ void WaitForAnyKey(const std::string& message) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "REAL - REduce Audio Latency v" << APP_VERSION.ToString() << ", mini)(ant, 2018"<< std::endl 
+    std::cout << "REAL - REduce Audio Latency " << APP_VERSION.ToString() << ", mini)(ant, 2018"<< std::endl 
         << "Project repository: https://github.com/miniant-git/REAL" << std::endl << std::endl;
 
     int errorCode = MinimumLatencyAudioClient().Start();
