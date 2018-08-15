@@ -31,6 +31,23 @@
 4. Download `curl` sources by launching `setup.bat` from `/real-app/deps/curl/`.
 5. Right-click on the `miniant-real` project in the **Solution Explorer** and select **Build**.
 
+## Features
+
+- [ ] Audio latency reduction
+    - [x] Reduce to minimum that's supported by the driver
+    - [ ] Set custom audio buffer size
+    - [ ] Per-device support
+        - [x] Default playback device
+        - [ ] User-specified device
+        - [ ] Multiple devices at once
+- [ ] Automatic updates
+    - [x] Check for updates
+    - [x] Download and apply latest update
+    - [ ] Remember to always/never update
+    - [ ] Custom update check interval
+- [ ] Configuration file
+    * To be planned
+
 ## FAQ
 
 ### How does this work?
