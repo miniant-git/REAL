@@ -15,11 +15,13 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MinimumLatencyAudioClient.cpp" />
     <ClCompile Include="src\Version.cpp" />
+    <ClCompile Include="src\WindowsFilesystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AutoUpdater.h" />
     <ClInclude Include="src\MinimumLatencyAudioClient.h" />
     <ClInclude Include="src\Version.h" />
+    <ClInclude Include="src\WindowsFilesystem.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
