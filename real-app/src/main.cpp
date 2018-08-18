@@ -6,7 +6,7 @@
 
 using namespace miniant::WasapiLatency;
 
-constexpr Version APP_VERSION(0, 1, 2);
+constexpr Version APP_VERSION(0, 1, 3);
 
 void WaitForAnyKey(const std::string& message) {
     while (_kbhit())
