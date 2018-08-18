@@ -31,6 +31,21 @@ std::optional<const json*> FindExecutableAsset(const json& response) {
     return {};
 }
 
+void DisplayReleaseNotes(const json& body) {
+    static const std::string notesStartMarker("\r\n[//]: # (begin_release_notes)");
+    static const std::string notesEndMarker("\r\n[//]: # (end_release_notes)");
+
+    std::string bodyString(body);
+    size_t notesStart = bodyString.find(notesStartMarker);
+    size_t notesEnd = bodyString.rfind(notesEndMarker);
+
+    if (notesStart == std::string::npos || notesEnd == std::string::npos)
+        return;
+
+    notesStart += notesStartMarker.length();
+    std::cout << bodyString.substr(notesStart, notesEnd - notesStart) << std::endl;
+}
+
 AutoUpdater::AutoUpdater(Version currentVersion, std::filesystem::path executable):
     m_currentVersion(std::move(currentVersion)),
     m_executable(std::move(executable)) {
@@ -86,9 +101,9 @@ bool AutoUpdater::Update() const {
         curl_easy_cleanup(curl);
         return false;
     }
-
-    std::cout << "A new update is available!" << std::endl
-        << "Do you want to update to version " << latestVersion.value().ToString() << "? [y/N]: ";
+    std::cout << "A new update is available!" << std::endl;
+    DisplayReleaseNotes(response["body"]);
+    std::cout << "Do you want to update to " << latestVersion.value().ToString() << "? [y/N]: ";
     char line[5];
     std::cin.getline(line, 5);
     std::string prompt(line);
@@ -166,8 +181,9 @@ bool AutoUpdater::UpdateUpdater() const {
         return false;
     }
 
-    std::cout << "A new update is available!" << std::endl
-        << "Do you want to update to version " << version.value().ToString() << "? [y/N]: ";
+    std::cout << "A new update is available!" << std::endl;
+    DisplayReleaseNotes(response["body"]);
+    std::cout << "Do you want to update to " << version.value().ToString() << "? [y/N]: ";
     char line[5];
     std::cin.getline(line, 5);
     std::string prompt(line);
