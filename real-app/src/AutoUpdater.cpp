@@ -1,5 +1,7 @@
 #include "AutoUpdater.h"
 
+#include "WindowsFilesystem.h"
+
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -12,6 +14,7 @@
 #include <vector>
 
 using namespace miniant::WasapiLatency;
+using namespace miniant::WindowsFilesystem;
 
 using json = nlohmann::json;
 using Buffer = std::vector<char>;
@@ -29,6 +32,10 @@ std::optional<const json*> FindExecutableAsset(const json& response) {
     }
 
     return {};
+}
+
+WindowsString GetAppTempDirectory() {
+    return GetTempDirectory() + TEXT("miniant\\REAL\\");
 }
 
 void DisplayReleaseNotes(const json& body) {
@@ -51,13 +58,10 @@ AutoUpdater::AutoUpdater(Version currentVersion, std::filesystem::path executabl
     m_executable(std::move(executable)) {
     curl_global_init(CURL_GLOBAL_ALL);
 
-    const std::filesystem::path executableToDelete = m_executable.string() + "~DELETE";
-    if (std::filesystem::exists(executableToDelete)) {
-        try {
-            std::filesystem::remove(executableToDelete);
-        } catch (std::filesystem::filesystem_error& error) {
-            std::cout << "Error: " << error.what() << std::endl;
-        }
+    const WindowsString executableToDelete = GetExecutablePath() + TEXT("~DELETE");
+    if (IsFile(executableToDelete)) {
+        if (!DeleteFile(executableToDelete))
+            std::cout << "Error: Could not delete temporary file: " << std::filesystem::path(executableToDelete) << std::endl;
     }
 }
 AutoUpdater::~AutoUpdater() {
@@ -101,6 +105,7 @@ bool AutoUpdater::Update() const {
         curl_easy_cleanup(curl);
         return false;
     }
+
     std::cout << "A new update is available!" << std::endl;
     DisplayReleaseNotes(response["body"]);
     std::cout << "Do you want to update to " << latestVersion.value().ToString() << "? [y/N]: ";
@@ -114,16 +119,24 @@ bool AutoUpdater::Update() const {
         return false;
     }
 
-    std::optional<const json*> executable = FindExecutableAsset(response);
-    if (!executable) {
+    std::optional<const json*> executableAsset = FindExecutableAsset(response);
+    if (!executableAsset) {
         std::cout << "Error: misconfigured update assets." << std::endl;
         curl_easy_cleanup(curl);
         return false;
     }
 
-    std::filesystem::path tempExecutable(m_executable.string() + "~TEMP");
+    WindowsString tempDirectory = GetAppTempDirectory();
+    if (!CreateDirectory(tempDirectory)) {
+        std::cout << "Error: Could not create temporary app directory: "
+            << std::filesystem::path(tempDirectory) << std::endl;
+        curl_easy_cleanup(curl);
+        return false;
+    }
 
-    const char* url = static_cast<std::string>((*executable.value())["browser_download_url"]).c_str();
+    std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
+
+    const char* url = static_cast<std::string>((*executableAsset.value())["browser_download_url"]).c_str();
     FILE* executableFile;
     fopen_s(&executableFile, tempExecutable.string().c_str(), "wb");
     curl_easy_reset(curl);
@@ -137,11 +150,14 @@ bool AutoUpdater::Update() const {
 
     fclose(executableFile);
 
-    try {
-        std::filesystem::rename(m_executable, m_executable.string() + "~DELETE");
-        std::filesystem::rename(tempExecutable, m_executable);
-    } catch (std::filesystem::filesystem_error& error) {
-        std::cout << "Error: " << error.what() << std::endl;
+    WindowsString executable = GetExecutablePath();
+    std::optional<WindowsString> executableDirectory = GetParentDirectory(executable);
+    WindowsString renameCommand = GetRenameCommand(executable, TEXT("REAL.exe~DELETE"));
+    WindowsString moveCommand = GetMoveCommand(tempExecutable, executable);
+    if (!ExecuteCommand(
+        renameCommand + TEXT(" & ") + moveCommand, 
+        !CanWriteTo(executable) || !executableDirectory || !CanWriteTo(executableDirectory.value()))) {
+        std::cout << "A filesystem error was encountered during the update procedure." << std::endl;
         return false;
     }
 
@@ -194,16 +210,24 @@ bool AutoUpdater::UpdateUpdater() const {
         return true;
     }
 
-    std::optional<const json*> executable = FindExecutableAsset(response);
-    if (!executable) {
+    std::optional<const json*> executableAsset = FindExecutableAsset(response);
+    if (!executableAsset) {
         std::cout << "Error: misconfigured update assets." << std::endl;
         curl_easy_cleanup(curl);
         return true;
     }
 
-    std::filesystem::path tempExecutable(m_executable.string() + "~TEMP");
+    WindowsString tempDirectory = GetAppTempDirectory();
+    if (!CreateDirectory(tempDirectory)) {
+        std::cout << "Error: Could not create temporary app directory: "
+            << std::filesystem::path(tempDirectory) << std::endl;
+        curl_easy_cleanup(curl);
+        return true;
+    }
 
-    const char* url = static_cast<std::string>((*executable.value())["browser_download_url"]).c_str();
+    std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
+
+    const char* url = static_cast<std::string>((*executableAsset.value())["browser_download_url"]).c_str();
     FILE* executableFile;
     fopen_s(&executableFile, tempExecutable.string().c_str(), "wb");
     curl_easy_reset(curl);
@@ -217,11 +241,14 @@ bool AutoUpdater::UpdateUpdater() const {
 
     fclose(executableFile);
 
-    try {
-        std::filesystem::rename(m_executable, m_executable.string() + "~DELETE");
-        std::filesystem::rename(tempExecutable, m_executable);
-    } catch (std::filesystem::filesystem_error& error) {
-        std::cout << "Error: " << error.what() << std::endl;
+    WindowsString executable = GetExecutablePath();
+    std::optional<WindowsString> executableDirectory = GetParentDirectory(executable);
+    WindowsString renameCommand = GetRenameCommand(executable, TEXT("REAL.exe~DELETE"));
+    WindowsString moveCommand = GetMoveCommand(tempExecutable, executable);
+    if (!ExecuteCommand(
+        renameCommand + TEXT(" & ") + moveCommand,
+        !CanWriteTo(executable) || !executableDirectory || !CanWriteTo(executableDirectory.value()))) {
+        std::cout << "A filesystem error was encountered during the update procedure." << std::endl;
         return true;
     }
 
