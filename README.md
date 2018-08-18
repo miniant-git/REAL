@@ -1,5 +1,7 @@
 # REAL - REduce Audio Latency
 
+## App versions prior to v0.1.3 can have trouble updating. In that case, please rerun the app as administrator or install the latest version manually. Sorry for inconvenience.
+
 ## Requirements
 
 * Windows 10 64-bit
