@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         std::cout << "ERROR: Could not enable low-latency mode. Error code " << errorCode << "." << std::endl << std::endl;
 
     std::cout << "Checking for updates..." << std::endl;
-    AutoUpdater(APP_VERSION, argv[0]).Update();
+    AutoUpdater(APP_VERSION).Update();
 
     if (errorCode == 0) 
         WaitForAnyKey("\nPress any key to disable and exit . . .");

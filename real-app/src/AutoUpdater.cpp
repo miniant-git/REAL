@@ -53,9 +53,8 @@ void DisplayReleaseNotes(const json& body) {
     std::cout << bodyString.substr(notesStart, notesEnd - notesStart) << std::endl;
 }
 
-AutoUpdater::AutoUpdater(Version currentVersion, std::filesystem::path executable):
-    m_currentVersion(std::move(currentVersion)),
-    m_executable(std::move(executable)) {
+AutoUpdater::AutoUpdater(Version currentVersion):
+    m_currentVersion(std::move(currentVersion)) {
     curl_global_init(CURL_GLOBAL_ALL);
 
     const WindowsString executableToDelete = GetExecutablePath() + TEXT("~DELETE");
