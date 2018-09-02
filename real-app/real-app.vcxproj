@@ -12,6 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AutoUpdater.cpp" />
+    <ClCompile Include="src\CurlWrapper\CurlException.cpp" />
+    <ClCompile Include="src\CurlWrapper\CurlHandle.cpp" />
+    <ClCompile Include="src\CurlWrapper\Writers\CurlFileWriter.cpp" />
+    <ClCompile Include="src\CurlWrapper\Writers\CurlMemoryWriter.cpp" />
+    <ClCompile Include="src\CurlWrapper\Writers\CurlWriter.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MinimumLatencyAudioClient.cpp" />
     <ClCompile Include="src\Version.cpp" />
@@ -19,6 +24,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AutoUpdater.h" />
+    <ClInclude Include="src\CurlWrapper\CurlException.h" />
+    <ClInclude Include="src\CurlWrapper\CurlHandle.h" />
+    <ClInclude Include="src\CurlWrapper\Writers\CurlFileWriter.h" />
+    <ClInclude Include="src\CurlWrapper\Writers\CurlWriter.h" />
+    <ClInclude Include="src\CurlWrapper\Writers\CurlMemoryWriter.h" />
     <ClInclude Include="src\MinimumLatencyAudioClient.h" />
     <ClInclude Include="src\Version.h" />
     <ClInclude Include="src\WindowsFilesystem.h" />
