@@ -2,7 +2,10 @@
 
 #include "WindowsFilesystem.h"
 
-#include <curl/curl.h>
+#include "CurlWrapper/CurlHandle.h"
+#include "CurlWrapper/Writers/CurlFileWriter.h"
+#include "CurlWrapper/Writers/CurlMemoryWriter.h"
+
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -11,19 +14,12 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
-#include <vector>
 
 using namespace miniant::AutoUpdater;
+using namespace miniant::CurlWrapper;
 using namespace miniant::WindowsFilesystem;
 
 using json = nlohmann::json;
-using Buffer = std::vector<char>;
-
-size_t PopulateBuffer(char* ptr, size_t size, size_t nmemb, void* userdata) {
-    auto buffer = reinterpret_cast<Buffer*>(userdata);
-    buffer->insert(buffer->end(), ptr, ptr+nmemb);
-    return nmemb;
-}
 
 std::optional<const json*> FindExecutableAsset(const json& response) {
     for (const auto& asset : response["assets"]) {
@@ -71,37 +67,21 @@ bool AutoUpdater::Update() const {
     if (this->UpdateUpdater())
         return true;
 
-    CURL* curl = curl_easy_init();
-    if (curl == nullptr)
-        return false;
+    CurlHandle curl;
+    curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/latest");
+    curl.SetUserAgent("real_updater_v1");
 
-    curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/miniant-git/REAL/releases/latest");
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "real_updater_v1");
-
-    Buffer buffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, PopulateBuffer);
-
-    CURLcode status = curl_easy_perform(curl);
-    if (status != CURLE_OK) {
-        std::cout << "Could not access the update server." << std::endl;
-        curl_easy_cleanup(curl);
-        return false;
-    }
-
-    long responseCode;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    CurlMemoryWriter memoryWriter;
+    long responseCode = memoryWriter.InitiateRequest(curl);
     if (responseCode != 200) {
         std::cout << "Check for updates failed." << std::endl;
-        curl_easy_cleanup(curl);
         return false;
     }
 
-    json response = json::parse(buffer);
+    json response = json::parse(memoryWriter.GetBuffer());
     std::optional<Version> latestVersion = Version::Parse(response["tag_name"]);
     if (!latestVersion || m_currentVersion >= latestVersion.value()) {
         std::cout << "The application is up-to-date." << std::endl;
-        curl_easy_cleanup(curl);
         return false;
     }
 
@@ -114,14 +94,12 @@ bool AutoUpdater::Update() const {
     std::transform(prompt.begin(), prompt.end(), prompt.begin(), std::tolower);
     if (prompt != "y" && prompt != "yes") {
         std::cout << "No: Keeping the current version." << std::endl;
-        curl_easy_cleanup(curl);
         return false;
     }
 
     std::optional<const json*> executableAsset = FindExecutableAsset(response);
     if (!executableAsset) {
         std::cout << "Error: misconfigured update assets." << std::endl;
-        curl_easy_cleanup(curl);
         return false;
     }
 
@@ -129,25 +107,19 @@ bool AutoUpdater::Update() const {
     if (!CreateDirectory(tempDirectory)) {
         std::cout << "Error: Could not create temporary app directory: "
             << std::filesystem::path(tempDirectory) << std::endl;
-        curl_easy_cleanup(curl);
         return false;
     }
 
     std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
-
     const char* url = static_cast<std::string>((*executableAsset.value())["browser_download_url"]).c_str();
-    FILE* executableFile;
-    fopen_s(&executableFile, tempExecutable.string().c_str(), "wb");
-    curl_easy_reset(curl);
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, executableFile);
+    curl.Reset();
+    curl.SetUrl(url);
+    curl.FollowRedirects(true);
 
+    CurlFileWriter fileWriter(tempExecutable);
     std::cout << "Downloading update..." << std::endl;
-    curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
-
-    fclose(executableFile);
+    fileWriter.InitiateRequest(curl);
+    fileWriter.Close();
 
     WindowsString executable = GetExecutablePath();
     std::optional<WindowsString> executableDirectory = GetParentDirectory(executable);
@@ -165,34 +137,19 @@ bool AutoUpdater::Update() const {
 }
 
 bool AutoUpdater::UpdateUpdater() const {
-    CURL* curl = curl_easy_init();
-    if (curl == nullptr)
-        return false;
-
-    curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v2");
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "real_updater_v1");
-
-    Buffer buffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, PopulateBuffer);
-
-    CURLcode status = curl_easy_perform(curl);
-    if (status != CURLE_OK) {
-        curl_easy_cleanup(curl);
-        return false;
-    }
-
-    long responseCode;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    CurlHandle curl;
+    curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v2");
+    curl.SetUserAgent("real_updater_v1");
+    
+    CurlMemoryWriter memoryWriter;
+    long responseCode = memoryWriter.InitiateRequest(curl);
     if (responseCode != 200) {
-        curl_easy_cleanup(curl);
         return false;
     }
 
-    json response = json::parse(buffer);
+    json response = json::parse(memoryWriter.GetBuffer());
     std::optional<Version> version = Version::Find(response["name"]);
     if (!version) {
-        curl_easy_cleanup(curl);
         return false;
     }
 
@@ -205,14 +162,12 @@ bool AutoUpdater::UpdateUpdater() const {
     std::transform(prompt.begin(), prompt.end(), prompt.begin(), std::tolower);
     if (prompt != "y" && prompt != "yes") {
         std::cout << "No: Keeping the current version." << std::endl;
-        curl_easy_cleanup(curl);
         return true;
     }
 
     std::optional<const json*> executableAsset = FindExecutableAsset(response);
     if (!executableAsset) {
         std::cout << "Error: misconfigured update assets." << std::endl;
-        curl_easy_cleanup(curl);
         return true;
     }
 
@@ -220,25 +175,19 @@ bool AutoUpdater::UpdateUpdater() const {
     if (!CreateDirectory(tempDirectory)) {
         std::cout << "Error: Could not create temporary app directory: "
             << std::filesystem::path(tempDirectory) << std::endl;
-        curl_easy_cleanup(curl);
         return true;
     }
 
     std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
-
     const char* url = static_cast<std::string>((*executableAsset.value())["browser_download_url"]).c_str();
-    FILE* executableFile;
-    fopen_s(&executableFile, tempExecutable.string().c_str(), "wb");
-    curl_easy_reset(curl);
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, executableFile);
+    curl.Reset();
+    curl.SetUrl(url);
+    curl.FollowRedirects(true);
 
+    CurlFileWriter fileWriter(tempExecutable);
     std::cout << "Downloading update..." << std::endl;
-    curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
-
-    fclose(executableFile);
+    fileWriter.InitiateRequest(curl);
+    fileWriter.Close();
 
     WindowsString executable = GetExecutablePath();
     std::optional<WindowsString> executableDirectory = GetParentDirectory(executable);
