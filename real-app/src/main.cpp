@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <iostream>
 
+using namespace miniant::AutoUpdater;
 using namespace miniant::WasapiLatency;
 
 constexpr Version APP_VERSION(0, 1, 3);

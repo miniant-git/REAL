@@ -2,7 +2,7 @@
 
 #include "Version.h"
 
-namespace miniant::WasapiLatency {
+namespace miniant::AutoUpdater {
 
 class AutoUpdater {
 public:

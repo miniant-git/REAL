@@ -3,7 +3,7 @@
 #include <regex>
 #include <sstream>
 
-using namespace miniant::WasapiLatency;
+using namespace miniant::AutoUpdater;
 
 const std::regex VERSION_PATTERN(
     R"(v(\d+)\.(\d+)\.(\d+))",
@@ -62,7 +62,7 @@ std::optional<Version> Version::Parse(const std::string& versionString) {
         static_cast<uint16_t>(patch)) };
 }
 
-std::optional<Version> miniant::WasapiLatency::Version::Find(const std::string& string) {
+std::optional<Version> miniant::AutoUpdater::Version::Find(const std::string& string) {
     std::smatch matches;
     if (!std::regex_search(string, matches, VERSION_PATTERN))
         return {};
