@@ -13,8 +13,6 @@ public:
 
 private:
     Version m_currentVersion;
-
-    bool UpdateUpdater() const;
 };
 
 }
