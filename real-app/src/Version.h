@@ -4,7 +4,7 @@
 #include <string>
 #include <optional>
 
-namespace miniant::WasapiLatency {
+namespace miniant::AutoUpdater {
 
 class Version {
 public:

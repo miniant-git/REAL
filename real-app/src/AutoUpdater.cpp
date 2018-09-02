@@ -13,7 +13,7 @@
 #include <optional>
 #include <vector>
 
-using namespace miniant::WasapiLatency;
+using namespace miniant::AutoUpdater;
 using namespace miniant::WindowsFilesystem;
 
 using json = nlohmann::json;
