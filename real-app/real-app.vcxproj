@@ -23,6 +23,7 @@
     <ClCompile Include="src\WindowsFilesystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\AutoUpdater.h" />
     <ClInclude Include="src\CurlWrapper\CurlException.h" />
     <ClInclude Include="src\CurlWrapper\CurlHandle.h" />
@@ -32,6 +33,12 @@
     <ClInclude Include="src\MinimumLatencyAudioClient.h" />
     <ClInclude Include="src\Version.h" />
     <ClInclude Include="src\WindowsFilesystem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="real-app.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\app.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
