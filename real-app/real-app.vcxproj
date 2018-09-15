@@ -76,14 +76,14 @@
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)out\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>REAL</TargetName>
-    <IncludePath>$(ProjectDir)deps\json;$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)deps\json;$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\include;$(ProjectDir)deps\spdlog\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)out\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>REAL</TargetName>
-    <IncludePath>$(ProjectDir)deps\json;$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)deps\json;$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\include;$(ProjectDir)deps\spdlog\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)deps\curl\curl-src\builds\libcurl-vc15-x64-release-static-ipv6-sspi-winssl\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
