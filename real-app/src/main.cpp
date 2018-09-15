@@ -1,6 +1,9 @@
 #include "AutoUpdater.h"
 #include "Windows/MinimumLatencyAudioClient.h"
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/ostream_sink.h>
+
 #include <conio.h>
 #include <iostream>
 
@@ -13,21 +16,26 @@ void WaitForAnyKey(const std::string& message) {
     while (_kbhit())
         _getch();
     
-    std::cout << message << std::endl;
+    spdlog::get("app_out")->info(message);
     _getch();
 }
 
 int main(int argc, char** argv) {
-    std::cout << "REAL - REduce Audio Latency " << APP_VERSION.ToString() << ", mini)(ant, 2018"<< std::endl 
-        << "Project: https://github.com/miniant-git/REAL" << std::endl << std::endl;
+    auto sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(std::cout);
+    auto app_out = std::make_shared<spdlog::logger>("app_out", sink);
+    app_out->set_pattern("%v");
+    spdlog::register_logger(app_out);
+
+    app_out->info("REAL - REduce Audio Latency {}, mini)(ant, 2018", APP_VERSION.ToString());
+    app_out->info("Project: https://github.com/miniant-git/REAL\n");
 
     int errorCode = MinimumLatencyAudioClient().Start();
     if (errorCode == 0)
-        std::cout << "Minimum audio latency enabled on the DEFAULT playback device!" << std::endl << std::endl;
+        app_out->info("Minimum audio latency enabled on the DEFAULT playback device!\n");
     else
-        std::cout << "ERROR: Could not enable low-latency mode. Error code " << errorCode << "." << std::endl << std::endl;
+        app_out->info("ERROR: Could not enable low-latency mode. Error code {}.\n", errorCode);
 
-    std::cout << "Checking for updates..." << std::endl;
+    app_out->info("Checking for updates...");
     AutoUpdater(APP_VERSION).Update();
 
     if (errorCode == 0) 

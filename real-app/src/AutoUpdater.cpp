@@ -7,6 +7,7 @@
 #include "CurlWrapper/Writers/CurlMemoryWriter.h"
 
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cctype>
@@ -53,14 +54,14 @@ std::optional<json> GetUpdateRelease(const Version& currentVersion, CurlHandle& 
     CurlMemoryWriter memoryWriter;
     long responseCode = memoryWriter.InitiateRequest(curl);
     if (responseCode != 200) {
-        std::cout << "Check for updates failed." << std::endl;
+        spdlog::get("app_out")->info("Check for updates failed.");
         return {};
     }
 
     json response = json::parse(memoryWriter.GetBuffer());
     std::optional<Version> latestVersion = Version::Parse(response["tag_name"]);
     if (!latestVersion || currentVersion >= latestVersion.value()) {
-        std::cout << "The application is up-to-date." << std::endl;
+        spdlog::get("app_out")->info("The application is up-to-date.");
         return {};
     }
 
@@ -92,7 +93,7 @@ void DisplayReleaseNotes(const json& body) {
         return;
 
     notesStart += notesStartMarker.length();
-    std::cout << bodyString.substr(notesStart, notesEnd - notesStart) << std::endl;
+    spdlog::get("app_out")->info(bodyString.substr(notesStart, notesEnd - notesStart));
 }
 
 AutoUpdater::AutoUpdater(Version currentVersion):
@@ -102,7 +103,7 @@ AutoUpdater::AutoUpdater(Version currentVersion):
     const WindowsString executableToDelete = GetExecutablePath() + TEXT("~DELETE");
     if (IsFile(executableToDelete)) {
         if (!DeleteFile(executableToDelete))
-            std::cout << "Error: Could not delete temporary file: " << std::filesystem::path(executableToDelete) << std::endl;
+            spdlog::get("app_out")->info("Error: Could not delete temporary file: {}", std::filesystem::path(executableToDelete).string());
     }
 }
 AutoUpdater::~AutoUpdater() {
@@ -115,29 +116,30 @@ bool AutoUpdater::Update() const {
     if (!response)
         return true;
 
-    std::cout << "A new update is available!" << std::endl;
+    auto app_out = spdlog::get("app_out");
+
+    app_out->info("A new update is available!");
     DisplayReleaseNotes(response.value()["body"]);
     std::optional<Version> latestVersion = Version::Parse(response.value()["tag_name"]);
-    std::cout << "Do you want to update to " << latestVersion.value().ToString() << "? [y/N]: ";
+    app_out->info("Do you want to update to {}? [y/N] : ", latestVersion.value().ToString());
     char line[5];
     std::cin.getline(line, 5);
     std::string prompt(line);
     std::transform(prompt.begin(), prompt.end(), prompt.begin(), std::tolower);
     if (prompt != "y" && prompt != "yes") {
-        std::cout << "No: Keeping the current version." << std::endl;
+        app_out->info("No: Keeping the current version.");
         return false;
     }
 
     std::optional<const json*> executableAsset = FindExecutableAsset(response.value());
     if (!executableAsset) {
-        std::cout << "Error: misconfigured update assets." << std::endl;
+        app_out->info("Error: misconfigured update assets.");
         return false;
     }
 
     WindowsString tempDirectory = GetAppTempDirectory();
     if (!CreateDirectory(tempDirectory)) {
-        std::cout << "Error: Could not create temporary app directory: "
-            << std::filesystem::path(tempDirectory) << std::endl;
+        app_out->info("Error: Could not create temporary app directory: {}", std::filesystem::path(tempDirectory).string());
         return false;
     }
 
@@ -148,7 +150,7 @@ bool AutoUpdater::Update() const {
     curl.FollowRedirects(true);
 
     CurlFileWriter fileWriter(tempExecutable);
-    std::cout << "Downloading update..." << std::endl;
+    app_out->info("Downloading update...");
     fileWriter.InitiateRequest(curl);
     fileWriter.Close();
 
@@ -159,10 +161,10 @@ bool AutoUpdater::Update() const {
     if (!ExecuteCommand(
         renameCommand + TEXT(" & ") + moveCommand,
         !CanWriteTo(executable) || !executableDirectory || !CanWriteTo(executableDirectory.value()))) {
-        std::cout << "A filesystem error was encountered during the update procedure." << std::endl;
+        app_out->info("A filesystem error was encountered during the update procedure.");
         return false;
     }
 
-    std::cout << "Updated successfully! Restart the application to apply changes." << std::endl;
+    app_out->info("Updated successfully! Restart the application to apply changes.");
     return true;
 }
