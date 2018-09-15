@@ -18,9 +18,9 @@
     <ClCompile Include="src\CurlWrapper\Writers\CurlMemoryWriter.cpp" />
     <ClCompile Include="src\CurlWrapper\Writers\CurlWriter.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\MinimumLatencyAudioClient.cpp" />
+    <ClCompile Include="src\Windows\MinimumLatencyAudioClient.cpp" />
     <ClCompile Include="src\Version.cpp" />
-    <ClCompile Include="src\WindowsFilesystem.cpp" />
+    <ClCompile Include="src\Windows\Filesystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -30,9 +30,9 @@
     <ClInclude Include="src\CurlWrapper\Writers\CurlFileWriter.h" />
     <ClInclude Include="src\CurlWrapper\Writers\CurlWriter.h" />
     <ClInclude Include="src\CurlWrapper\Writers\CurlMemoryWriter.h" />
-    <ClInclude Include="src\MinimumLatencyAudioClient.h" />
+    <ClInclude Include="src\Windows\MinimumLatencyAudioClient.h" />
     <ClInclude Include="src\Version.h" />
-    <ClInclude Include="src\WindowsFilesystem.h" />
+    <ClInclude Include="src\Windows\Filesystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="real-app.rc" />
