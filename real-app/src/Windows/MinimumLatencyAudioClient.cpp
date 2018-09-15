@@ -3,7 +3,7 @@
 #include <Audioclient.h>
 #include <mmdeviceapi.h>
 
-using namespace miniant::WasapiLatency;
+using namespace miniant::Windows::WasapiLatency;
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);

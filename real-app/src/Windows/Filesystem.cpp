@@ -1,8 +1,8 @@
-#include "WindowsFilesystem.h"
+#include "Filesystem.h"
 
 #include <memory>
 
-using namespace miniant::WindowsFilesystem;
+using namespace miniant::Windows::Filesystem;
 
 const WindowsString PATH_SEPARATORS(TEXT("\\/"));
 
@@ -62,7 +62,7 @@ bool CanAccess(const WindowsString& path, DWORD accessRights) {
     return AccessStatus == TRUE;
 }
 
-namespace miniant::WindowsFilesystem {
+namespace miniant::Windows::Filesystem {
 
 WindowsString WrapInDoubleCommas(const WindowsString& string) {
     return TEXT("\"") + string + TEXT("\"");

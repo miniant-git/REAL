@@ -1,6 +1,6 @@
 #pragma once
 
-namespace miniant::WasapiLatency {
+namespace miniant::Windows::WasapiLatency {
 
 class MinimumLatencyAudioClient {
 public:

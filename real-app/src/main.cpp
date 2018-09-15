@@ -1,11 +1,11 @@
 #include "AutoUpdater.h"
-#include "MinimumLatencyAudioClient.h"
+#include "Windows/MinimumLatencyAudioClient.h"
 
 #include <conio.h>
 #include <iostream>
 
 using namespace miniant::AutoUpdater;
-using namespace miniant::WasapiLatency;
+using namespace miniant::Windows::WasapiLatency;
 
 constexpr Version APP_VERSION(0, 1, 3);
 

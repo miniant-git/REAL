@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace miniant::WindowsFilesystem {
+namespace miniant::Windows::Filesystem {
 
 using WindowsString = std::basic_string<TCHAR>;
 

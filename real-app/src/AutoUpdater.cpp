@@ -1,6 +1,6 @@
 #include "AutoUpdater.h"
 
-#include "WindowsFilesystem.h"
+#include "Windows/Filesystem.h"
 
 #include "CurlWrapper/CurlHandle.h"
 #include "CurlWrapper/Writers/CurlFileWriter.h"
@@ -17,7 +17,7 @@
 
 using namespace miniant::AutoUpdater;
 using namespace miniant::CurlWrapper;
-using namespace miniant::WindowsFilesystem;
+using namespace miniant::Windows::Filesystem;
 
 using json = nlohmann::json;
 
