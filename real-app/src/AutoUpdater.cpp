@@ -22,7 +22,7 @@ using namespace miniant::Windows::Filesystem;
 
 using json = nlohmann::json;
 
-std::optional<json> GetUpdaterRelease(CurlHandle& curl) {
+std::optional<std::tuple<Version, json>> GetUpdaterRelease(CurlHandle& curl) {
     curl.Reset();
     curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v2");
     curl.SetUserAgent("real_updater_v1");
@@ -39,11 +39,11 @@ std::optional<json> GetUpdaterRelease(CurlHandle& curl) {
         return {};
     }
 
-    return response;
+    return { { std::move(version.value()), std::move(response) } };
 }
 
-std::optional<json> GetUpdateRelease(const Version& currentVersion, CurlHandle& curl) {
-    std::optional<json> updaterRelease = GetUpdaterRelease(curl);
+std::optional<std::tuple<Version, json>> GetUpdateRelease(const Version& currentVersion, CurlHandle& curl) {
+    std::optional<std::tuple<Version, json>> updaterRelease = GetUpdaterRelease(curl);
     if (updaterRelease)
         return updaterRelease;
 
@@ -65,7 +65,7 @@ std::optional<json> GetUpdateRelease(const Version& currentVersion, CurlHandle& 
         return {};
     }
 
-    return response;
+    return { {std::move(latestVersion.value()), std::move(response) } };
 }
 
 std::optional<const json*> FindExecutableAsset(const json& response) {
@@ -112,16 +112,16 @@ AutoUpdater::~AutoUpdater() {
 
 bool AutoUpdater::Update() const {
     CurlHandle curl;
-    std::optional<json> response = GetUpdateRelease(m_currentVersion, curl);
-    if (!response)
+    std::optional<std::tuple<Version, json>> release = GetUpdateRelease(m_currentVersion, curl);
+    if (!release)
         return true;
 
-    auto app_out = spdlog::get("app_out");
+    auto[version, response] = std::move(release.value());
 
+    auto app_out = spdlog::get("app_out");
     app_out->info("A new update is available!");
-    DisplayReleaseNotes(response.value()["body"]);
-    std::optional<Version> latestVersion = Version::Parse(response.value()["tag_name"]);
-    app_out->info("Do you want to update to {}? [y/N] : ", latestVersion.value().ToString());
+    DisplayReleaseNotes(response["body"]);
+    app_out->info("Do you want to update to {}? [y/N] : ", version.ToString());
     char line[5];
     std::cin.getline(line, 5);
     std::string prompt(line);
@@ -131,7 +131,7 @@ bool AutoUpdater::Update() const {
         return false;
     }
 
-    std::optional<const json*> executableAsset = FindExecutableAsset(response.value());
+    std::optional<const json*> executableAsset = FindExecutableAsset(response);
     if (!executableAsset) {
         app_out->info("Error: misconfigured update assets.");
         return false;
