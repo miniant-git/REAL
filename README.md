@@ -1,6 +1,6 @@
-# REAL - REduce Audio Latency
+![REAL](img/logo.png)
 
-## App versions prior to v0.1.3 can have trouble updating. In that case, please rerun the app as administrator or install the latest version manually. Sorry for inconvenience.
+---
 
 ## Requirements
 
@@ -42,13 +42,15 @@
         - [x] Default playback device
         - [ ] User-specified device
         - [ ] Multiple devices at once
+- [ ] Graphical user interface
+    - [ ] Minimise to tray
+    - [ ] Start minimised
 - [ ] Automatic updates
     - [x] Check for updates
     - [x] Download and apply latest update
+    - [x] Show changelog
     - [ ] Remember to always/never update
     - [ ] Custom update check interval
-- [ ] Configuration file
-    * To be planned
 
 ## FAQ
 
