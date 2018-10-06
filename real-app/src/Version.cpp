@@ -15,7 +15,7 @@ std::string Version::ToString() const {
     return ss.str();
 }
 
-bool Version::operator< (const Version& rhs) const {
+bool Version::operator< (const Version& rhs) const noexcept {
     if (m_major != rhs.m_major)
         return m_major < rhs.m_major;
 
@@ -25,23 +25,23 @@ bool Version::operator< (const Version& rhs) const {
     return m_patch < rhs.m_patch;
 }
 
-bool Version::operator> (const Version& rhs) const {
+bool Version::operator> (const Version& rhs) const noexcept {
     return rhs < *this;
 }
 
-bool Version::operator==(const Version& rhs) const {
+bool Version::operator==(const Version& rhs) const noexcept {
     return m_major == rhs.m_major && m_minor == rhs.m_minor && m_patch == rhs.m_patch;
 }
 
-bool Version::operator!=(const Version& rhs) const {
+bool Version::operator!=(const Version& rhs) const noexcept {
     return !(*this == rhs);
 }
 
-bool Version::operator<=(const Version& rhs) const {
+bool Version::operator<=(const Version& rhs) const noexcept {
     return *this == rhs || *this < rhs;
 }
 
-bool Version::operator>=(const Version& rhs) const {
+bool Version::operator>=(const Version& rhs) const noexcept {
     return *this == rhs || *this > rhs;
 }
 
@@ -62,7 +62,7 @@ std::optional<Version> Version::Parse(const std::string& versionString) {
         static_cast<uint16_t>(patch)) };
 }
 
-std::optional<Version> miniant::AutoUpdater::Version::Find(const std::string& string) {
+std::optional<Version> Version::Find(const std::string& string) {
     std::smatch matches;
     if (!std::regex_search(string, matches, VERSION_PATTERN))
         return {};

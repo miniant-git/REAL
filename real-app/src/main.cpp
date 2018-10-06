@@ -10,11 +10,9 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Windows.h>
-#include <shellapi.h>
-
 #include <conio.h>
 
+#include <locale>
 #include <iostream>
 #include <sstream>
 
@@ -27,18 +25,29 @@ constexpr Version APP_VERSION(0, 1, 3);
 constexpr TCHAR COMMAND_LINE_OPTION_TRAY[] = TEXT("--tray");
 
 void WaitForAnyKey(const std::string& message) {
-    while (_kbhit())
+    while (_kbhit()) {
         _getch();
+    }
 
     spdlog::get("app_out")->info(message);
     _getch();
 }
 
 void DisplayExitMessage(int errorCode) {
-    if (errorCode == 0)
+    if (errorCode == 0) {
         WaitForAnyKey("\nPress any key to disable and exit . . .");
-    else
+    } else {
         WaitForAnyKey("\nPress any key to exit . . .");
+    }
+}
+
+std::string ToLower(const std::string& string) {
+    std::string result;
+    for (const auto& c : string) {
+        result.append(1, std::tolower(c, std::locale()));
+    }
+    
+    return result;
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
@@ -84,13 +93,30 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_out->info("Project: https://github.com/miniant-git/REAL\n");
 
     errorCode = MinimumLatencyAudioClient().Start();
-    if (errorCode == 0)
+    if (errorCode == 0) {
         app_out->info("Minimum audio latency enabled on the DEFAULT playback device!\n");
-    else
+    } else {
         app_out->info("ERROR: Could not enable low-latency mode. Error code {}.\n", errorCode);
+    }
 
     app_out->info("Checking for updates...");
-    AutoUpdater(APP_VERSION).Update();
+    AutoUpdater updater;
+    std::optional<UpdateInfo> info = updater.GetUpdateInfo();
+    if (!info) {
+        app_out->info("Update failed!");
+    } else if (info->version > APP_VERSION) {
+        app_out->info("A new update is available!");
+        app_out->info(info->releaseNotes);
+        std::cout << "Do you want to update to " << info->version.ToString() << "? [y/N] : ";
+        char line[5];
+        std::cin.getline(line, 5);
+        std::string prompt(ToLower(line));
+        if (prompt == "y" || prompt == "yes") {
+            updater.ApplyUpdate(*info);
+        } else {
+            app_out->info("No: Keeping the current version.");
+        }
+    }
 
     if (commandLine == COMMAND_LINE_OPTION_TRAY) {
         MSG msg;

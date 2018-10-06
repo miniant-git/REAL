@@ -9,13 +9,6 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include <algorithm>
-#include <cctype>
-#include <filesystem>
-#include <iomanip>
-#include <iostream>
-#include <optional>
-
 using namespace miniant::AutoUpdater;
 using namespace miniant::CurlWrapper;
 using namespace miniant::Windows::Filesystem;
@@ -30,22 +23,23 @@ std::optional<std::tuple<Version, json>> GetUpdaterRelease(CurlHandle& curl) {
     CurlMemoryWriter memoryWriter;
     long responseCode = memoryWriter.InitiateRequest(curl);
     if (responseCode != 200) {
-        return {};
+        return std::nullopt;
     }
 
     json response = json::parse(memoryWriter.GetBuffer());
     std::optional<Version> version = Version::Find(response["name"]);
     if (!version) {
-        return {};
+        return std::nullopt;
     }
 
-    return { { std::move(version.value()), std::move(response) } };
+    return { { std::move(*version), std::move(response) } };
 }
 
-std::optional<std::tuple<Version, json>> GetUpdateRelease(const Version& currentVersion, CurlHandle& curl) {
+std::optional<std::tuple<Version, json>> GetUpdateRelease(CurlHandle& curl) {
     std::optional<std::tuple<Version, json>> updaterRelease = GetUpdaterRelease(curl);
-    if (updaterRelease)
+    if (updaterRelease) {
         return updaterRelease;
+    }
 
     curl.Reset();
     curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/latest");
@@ -55,33 +49,33 @@ std::optional<std::tuple<Version, json>> GetUpdateRelease(const Version& current
     long responseCode = memoryWriter.InitiateRequest(curl);
     if (responseCode != 200) {
         spdlog::get("app_out")->info("Check for updates failed.");
-        return {};
+        return std::nullopt;
     }
 
     json response = json::parse(memoryWriter.GetBuffer());
     std::optional<Version> latestVersion = Version::Parse(response["tag_name"]);
-    if (!latestVersion || currentVersion >= latestVersion.value()) {
-        spdlog::get("app_out")->info("The application is up-to-date.");
-        return {};
+    if (!latestVersion) {
+        return std::nullopt;
     }
 
-    return { {std::move(latestVersion.value()), std::move(response) } };
+    return { { std::move(*latestVersion), std::move(response) } };
 }
 
-std::optional<const json*> FindExecutableAsset(const json& response) {
+std::optional<std::string> FindUpdateAssetUrl(const json& response) {
     for (const auto& asset : response["assets"]) {
-        if (asset["name"] == "update")
-            return { &asset };
+        if (asset["name"] == "update") {
+            return { asset["browser_download_url"] };
+        }
     }
 
-    return {};
+    return std::nullopt;
 }
 
 WindowsString GetAppTempDirectory() {
     return GetTempDirectory() + TEXT("miniant\\REAL\\");
 }
 
-void DisplayReleaseNotes(const json& body) {
+std::optional<std::string> GetReleaseNotes(const json& body) {
     static const std::string notesStartMarker("\r\n[//]: # (begin_release_notes)");
     static const std::string notesEndMarker("\r\n[//]: # (end_release_notes)");
 
@@ -89,53 +83,62 @@ void DisplayReleaseNotes(const json& body) {
     size_t notesStart = bodyString.find(notesStartMarker);
     size_t notesEnd = bodyString.rfind(notesEndMarker);
 
-    if (notesStart == std::string::npos || notesEnd == std::string::npos)
-        return;
+    if (notesStart == std::string::npos || notesEnd == std::string::npos) {
+        return std::nullopt;
+    }
 
     notesStart += notesStartMarker.length();
-    spdlog::get("app_out")->info(bodyString.substr(notesStart, notesEnd - notesStart));
+    return bodyString.substr(notesStart, notesEnd - notesStart);
 }
 
-AutoUpdater::AutoUpdater(Version currentVersion):
-    m_currentVersion(std::move(currentVersion)) {
+AutoUpdater::AutoUpdater() {
     curl_global_init(CURL_GLOBAL_ALL);
 
     const WindowsString executableToDelete = GetExecutablePath() + TEXT("~DELETE");
     if (IsFile(executableToDelete)) {
-        if (!DeleteFile(executableToDelete))
+        if (!DeleteFile(executableToDelete)) {
             spdlog::get("app_out")->info("Error: Could not delete temporary file: {}", std::filesystem::path(executableToDelete).string());
+        }
     }
 }
 AutoUpdater::~AutoUpdater() {
     curl_global_cleanup();
 }
 
-bool AutoUpdater::Update() const {
+std::optional<UpdateInfo> AutoUpdater::GetUpdateInfo() const {
     CurlHandle curl;
-    std::optional<std::tuple<Version, json>> release = GetUpdateRelease(m_currentVersion, curl);
-    if (!release)
-        return true;
-
-    auto[version, response] = std::move(release.value());
+    std::optional<std::tuple<Version, json>> release = GetUpdateRelease(curl);
+    if (!release) {
+        return std::nullopt;
+    }
 
     auto app_out = spdlog::get("app_out");
-    app_out->info("A new update is available!");
-    DisplayReleaseNotes(response["body"]);
-    app_out->info("Do you want to update to {}? [y/N] : ", version.ToString());
-    char line[5];
-    std::cin.getline(line, 5);
-    std::string prompt(line);
-    std::transform(prompt.begin(), prompt.end(), prompt.begin(), std::tolower);
-    if (prompt != "y" && prompt != "yes") {
-        app_out->info("No: Keeping the current version.");
-        return false;
+
+    auto[version, response] = std::move(*release);
+    std::optional<std::string> downloadUrl = FindUpdateAssetUrl(response);
+    if (!downloadUrl) {
+        app_out->info("Error: misconfigured update assets.");
+        return std::nullopt;
     }
 
-    std::optional<const json*> executableAsset = FindExecutableAsset(response);
-    if (!executableAsset) {
-        app_out->info("Error: misconfigured update assets.");
-        return false;
+    std::optional<std::string> releaseNotes = GetReleaseNotes(response["body"]);
+    if (!releaseNotes) {
+        app_out->info("Warning: missing release notes");
     }
+
+    UpdateInfo info;
+    info.version = std::move(version);
+    info.downloadUrl = std::move(*downloadUrl);
+    info.releaseNotes = std::move(*releaseNotes);
+    return info;
+}
+
+bool AutoUpdater::ApplyUpdate(const UpdateInfo& info) const {
+    auto app_out = spdlog::get("app_out");
+
+    CurlHandle curl;
+    curl.SetUrl(info.downloadUrl);
+    curl.FollowRedirects(true);
 
     WindowsString tempDirectory = GetAppTempDirectory();
     if (!CreateDirectory(tempDirectory)) {
@@ -144,11 +147,6 @@ bool AutoUpdater::Update() const {
     }
 
     std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
-    const char* url = static_cast<std::string>((*executableAsset.value())["browser_download_url"]).c_str();
-    curl.Reset();
-    curl.SetUrl(url);
-    curl.FollowRedirects(true);
-
     CurlFileWriter fileWriter(tempExecutable);
     app_out->info("Downloading update...");
     fileWriter.InitiateRequest(curl);
