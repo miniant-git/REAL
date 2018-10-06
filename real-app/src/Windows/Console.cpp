@@ -14,7 +14,10 @@ void Console::Open() {
 
     FILE* dummy;
     freopen_s(&dummy, "conout$", "w", stdout);
+    freopen_s(&dummy, "conin$", "r", stdin);
+
     std::cout.clear();
+    std::cin.clear();
 
     if (m_onShow)
         m_onShow();

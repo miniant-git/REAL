@@ -4,15 +4,19 @@
 
 namespace miniant::AutoUpdater {
 
+struct UpdateInfo {
+    Version version;
+    std::string downloadUrl;
+    std::string releaseNotes;
+};
+
 class AutoUpdater {
 public:
-    AutoUpdater(Version currentVersion);
+    AutoUpdater();
     ~AutoUpdater();
 
-    bool Update() const;
-
-private:
-    Version m_currentVersion;
+    std::optional<UpdateInfo> GetUpdateInfo() const;
+    bool ApplyUpdate(const UpdateInfo& info) const;
 };
 
 }
