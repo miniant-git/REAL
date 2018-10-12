@@ -146,19 +146,25 @@ bool AutoUpdater::ApplyUpdate(const UpdateInfo& info) const {
         return false;
     }
 
-    std::filesystem::path tempExecutable(tempDirectory + TEXT("update"));
-    CurlFileWriter fileWriter(tempExecutable);
+    std::filesystem::path updateFile(tempDirectory + TEXT("update.zip"));
+    CurlFileWriter fileWriter(updateFile);
     app_out->info("Downloading update...");
     fileWriter.InitiateRequest(curl);
     fileWriter.Close();
 
     WindowsString executable = GetExecutablePath();
     std::optional<WindowsString> executableDirectory = GetParentDirectory(executable);
+    if (!executableDirectory) {
+        app_out->info("Could not get application's executable file directory.");
+        return false;
+    }
+
     WindowsString renameCommand = GetRenameCommand(executable, TEXT("REAL.exe~DELETE"));
-    WindowsString moveCommand = GetMoveCommand(tempExecutable, executable);
+    WindowsString extractCommand = GetExtractZipCommand(updateFile, *executableDirectory);
+    WindowsString deleteCommand = GetDeleteCommand(updateFile);
     if (!ExecuteCommand(
-        renameCommand + TEXT(" & ") + moveCommand,
-        !CanWriteTo(executable) || !executableDirectory || !CanWriteTo(executableDirectory.value()))) {
+        renameCommand + TEXT(" && ") + extractCommand + TEXT(" && ") + deleteCommand,
+        !CanWriteTo(executable) || !CanWriteTo(*executableDirectory))) {
         app_out->info("A filesystem error was encountered during the update procedure.");
         return false;
     }

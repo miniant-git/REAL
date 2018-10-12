@@ -1,6 +1,7 @@
 #include "Filesystem.h"
 
 #include <memory>
+#include <regex>
 
 using namespace miniant::Windows::Filesystem;
 
@@ -62,14 +63,23 @@ bool CanAccess(const WindowsString& path, DWORD accessRights) {
     return AccessStatus == TRUE;
 }
 
+WindowsString MakePowerShellCommand(const WindowsString& command) {
+    static const std::basic_regex<WindowsString::value_type> backslash(TEXT(R"(\\)"), std::regex_constants::optimize);
+    static const std::basic_regex<WindowsString::value_type> doubleQuotes(TEXT(R"(")"), std::regex_constants::optimize);
+
+    WindowsString escapedCommand = std::regex_replace(command, backslash, TEXT(R"(\\)"));
+    escapedCommand = std::regex_replace(escapedCommand, doubleQuotes, TEXT(R"(\")"));
+    return TEXT("powershell -Command \"&{ $ErrorActionPreference = 'Stop'; ") + escapedCommand + TEXT("; trap { exit 1 }}\"");
+}
+
 namespace miniant::Windows::Filesystem {
 
-WindowsString WrapInDoubleCommas(const WindowsString& string) {
+WindowsString WrapInDoubleQuotes(const WindowsString& string) {
     return TEXT("\"") + string + TEXT("\"");
 }
 
 bool ExecuteCommand(const WindowsString& command, bool asAdministrator) {
-    WindowsString parameters = TEXT("/C ") + WrapInDoubleCommas(command);
+    WindowsString parameters = TEXT("/C ") + WrapInDoubleQuotes(command);
 
     SHELLEXECUTEINFO info = {};
     info.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -80,8 +90,10 @@ bool ExecuteCommand(const WindowsString& command, bool asAdministrator) {
     info.nShow = SW_HIDE;
     if (::ShellExecuteEx(&info) == TRUE) {
         ::WaitForSingleObject(info.hProcess, INFINITE);
+        DWORD exitCode;
+        bool success = ::GetExitCodeProcess(info.hProcess, &exitCode);
         ::CloseHandle(info.hProcess);
-        return true;
+        return success && exitCode == 0;
     }
 
     return false;
@@ -172,15 +184,20 @@ bool IsFile(const WindowsString& path) {
 }
 
 WindowsString GetDeleteCommand(const WindowsString& filepath) {
-    return TEXT("del /F /Q ") + WrapInDoubleCommas(filepath);
+    return TEXT("del /F /Q ") + WrapInDoubleQuotes(filepath);
 }
 
 WindowsString GetMoveCommand(const WindowsString& source, const WindowsString& destination) {
-    return TEXT("move /Y ") + WrapInDoubleCommas(source) + TEXT(" ") + WrapInDoubleCommas(destination);
+    return TEXT("move /Y ") + WrapInDoubleQuotes(source) + TEXT(" ") + WrapInDoubleQuotes(destination);
 }
 
 WindowsString GetRenameCommand(const WindowsString& source, const WindowsString& newName) {
-    return TEXT("rename ") + WrapInDoubleCommas(source) + TEXT(" ") + WrapInDoubleCommas(newName);
+    return TEXT("rename ") + WrapInDoubleQuotes(source) + TEXT(" ") + WrapInDoubleQuotes(newName);
+}
+
+WindowsString GetExtractZipCommand(const WindowsString& zipfile, const WindowsString& destination) {
+    return MakePowerShellCommand(TEXT("Expand-Archive -Path ") + WrapInDoubleQuotes(zipfile)
+        + TEXT(" -DestinationPath ") + WrapInDoubleQuotes(destination));
 }
 
 bool CanWriteTo(const WindowsString& path) {
@@ -217,6 +234,10 @@ bool CreateDirectory(const WindowsString& path) {
     }
 
     return true;
+}
+
+bool ExtractZip(const WindowsString& zipfile, const WindowsString& destination) {
+    return ExecuteCommand(GetExtractZipCommand(zipfile, destination), !CanWriteTo(destination));
 }
 
 }
