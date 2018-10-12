@@ -105,6 +105,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     if (!info) {
         app_out->info("Update failed!");
     } else if (info->version > APP_VERSION) {
+        if (trayIcon != nullptr) {
+            trayIcon->Hide();
+        }
+
+        console->Open();
+
         app_out->info("A new update is available!");
         app_out->info(info->releaseNotes);
         std::cout << "Do you want to update to " << info->version.ToString() << "? [y/N] : ";
@@ -116,6 +122,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         } else {
             app_out->info("No: Keeping the current version.");
         }
+
+        DisplayExitMessage(errorCode);
+        return errorCode;
+    } else {
+        app_out->info("The application is up-to-date.");
     }
 
     if (commandLine == COMMAND_LINE_OPTION_TRAY) {

@@ -19,8 +19,10 @@ TrayIcon::TrayIcon(MessagingWindow& window, HICON hIcon):
     window.SetEventHandler(m_data.uCallbackMessage, [this](const MessagingWindow& window, WPARAM wParam, LPARAM lParam) {
         switch (LOWORD(lParam)) {
             case WM_LBUTTONUP:
-                if (m_lButtonUpHandler)
+                if (m_lButtonUpHandler) {
                     m_lButtonUpHandler(*this);
+                }
+
                 break;
 
             default:
@@ -37,18 +39,32 @@ TrayIcon::~TrayIcon() noexcept {
 }
 
 void TrayIcon::Show() {
-    if (!::Shell_NotifyIcon(NIM_ADD, &m_data))
+    if (m_shown) {
+        return;
+    }
+
+    if (!::Shell_NotifyIcon(NIM_ADD, &m_data)) {
         throw Exception();
+    }
 
     if (!::Shell_NotifyIcon(NIM_SETVERSION, &m_data)) {
         ::Shell_NotifyIcon(NIM_DELETE, &m_data);
         throw Exception();
     }
+
+    m_shown = true;
 }
 
 void TrayIcon::Hide() {
-    if (!::Shell_NotifyIcon(NIM_DELETE, &m_data))
+    if (!m_shown) {
+        return;
+    }
+
+    if (!::Shell_NotifyIcon(NIM_DELETE, &m_data)) {
         throw Exception();
+    }
+
+    m_shown = false;
 }
 
 void TrayIcon::SetLButtonUpHandler(TrayEventHandler handler) noexcept {
