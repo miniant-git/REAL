@@ -13,6 +13,7 @@ public:
 
 private:
     std::function<void()> m_onShow;
+    bool m_opened = false;
 };
 
 }
