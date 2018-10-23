@@ -46,7 +46,7 @@ std::string ToLower(const std::string& string) {
     for (const auto& c : string) {
         result.append(1, std::tolower(c, std::locale()));
     }
-    
+
     return result;
 }
 
@@ -72,7 +72,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     int errorCode = 0;
 
     if (commandLine == COMMAND_LINE_OPTION_TRAY) {
-        window = std::make_unique<MessagingWindow>();
+        tl::expected windowPtrResult = MessagingWindow::CreatePtr();
+        if (!windowPtrResult) {
+#pragma push_macro("GetMessage")
+#undef GetMessage
+            app_out->error("Error: {}", windowPtrResult.error().GetMessage());
+            return errorCode;
+        }
+
+        window = std::move(*windowPtrResult);
         HICON hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
         trayIcon = std::make_unique<TrayIcon>(*window, hIcon);
         trayIcon->SetLButtonUpHandler([=, &errorCode](TrayIcon& trayIcon) {
@@ -101,8 +109,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     app_out->info("Checking for updates...");
     AutoUpdater updater;
-    std::optional<UpdateInfo> info = updater.GetUpdateInfo();
+    tl::expected cleanupResult = updater.CleanupPreviousSetup();
+    if (!cleanupResult) {
+        app_out->info("Error: {}", cleanupResult.error().GetMessage());
+    }
+
+    tl::expected info = updater.GetUpdateInfo();
     if (!info) {
+        app_out->info("Error: {}", info.error().GetMessage());
         app_out->info("Update failed!");
     } else if (info->version > APP_VERSION) {
         if (trayIcon != nullptr) {
@@ -112,7 +126,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         console->Open();
 
         app_out->info("A new update is available!");
-        app_out->info(info->releaseNotes);
+        if (info->releaseNotes) {
+            app_out->info(*info->releaseNotes);
+        }
+
         std::cout << "Do you want to update to " << info->version.ToString() << "? [y/N] : ";
         char line[5];
         std::cin.getline(line, 5);
@@ -129,6 +146,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         app_out->info("The application is up-to-date.");
     }
 
+#pragma pop_macro("GetMessage")
     if (commandLine == COMMAND_LINE_OPTION_TRAY) {
         MSG msg;
         while (::GetMessage(&msg, NULL, 0, 0) > 0) {

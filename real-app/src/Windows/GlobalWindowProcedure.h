@@ -1,5 +1,9 @@
 #pragma once
 
+#include "WindowsError.h"
+
+#include <tl/expected.hpp>
+
 #include <Windows.h>
 
 #include <functional>
@@ -14,7 +18,7 @@ public:
 
     static UINT GetFreeEventId() noexcept;
 
-    static WNDCLASS RegisterWindowClass(LPCTSTR lpszClassName);
+    static tl::expected<WNDCLASS, WindowsError> RegisterWindowClass(LPCTSTR lpszClassName);
     static void SetWindowProcedure(HWND hWnd, WindowProcedure procedure);
 
 private:

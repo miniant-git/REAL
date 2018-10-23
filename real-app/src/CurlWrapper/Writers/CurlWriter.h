@@ -8,7 +8,7 @@ class CurlWriter {
 public:
     virtual ~CurlWriter() = default;
 
-    long InitiateRequest(CurlHandle& handle);
+    tl::expected<long, CurlError> InitiateRequest(CurlHandle& handle);
 
 protected:
     virtual CurlHandle::write_callback GetWriteCallback() = 0;

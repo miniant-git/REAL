@@ -1,6 +1,6 @@
 #include "GlobalWindowProcedure.h"
 
-#include "Exception.h"
+#include <cassert>
 
 using namespace miniant::Windows;
 
@@ -11,15 +11,19 @@ UINT GlobalWindowProcedure::GetFreeEventId() noexcept {
     return nextFreeEventId++;
 }
 
-WNDCLASS GlobalWindowProcedure::RegisterWindowClass(LPCTSTR lpszClassName) {
+tl::expected<WNDCLASS, WindowsError> GlobalWindowProcedure::RegisterWindowClass(LPCTSTR lpszClassName) {
+    assert(lpszClassName != nullptr);
+
     WNDCLASS wc = {};
     wc.lpszClassName = lpszClassName;
     wc.lpfnWndProc = &WndProc;
-    if (!::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCWSTR>(&WndProc), &wc.hInstance))
-        throw Exception();
+    if (!::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCWSTR>(&WndProc), &wc.hInstance)) {
+        return tl::make_unexpected(WindowsError());
+    }
 
-    if (::RegisterClass(&wc) == 0)
-        throw Exception();
+    if (::RegisterClass(&wc) == 0) {
+        return tl::make_unexpected(WindowsError());
+    }
 
     return wc;
 }
@@ -38,8 +42,9 @@ LRESULT CALLBACK GlobalWindowProcedure::WndProc(HWND hWnd, UINT uMsg, WPARAM wPa
 
     if (*windowProcedure) {
         std::optional<LRESULT> lResult = (*windowProcedure)(hWnd, uMsg, wParam, lParam);
-        if (lResult)
+        if (lResult) {
             return lResult.value();
+        }
     }
 
     return ::DefWindowProc(hWnd, uMsg, wParam, lParam);

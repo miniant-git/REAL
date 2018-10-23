@@ -11,8 +11,8 @@ public:
     TrayIcon(MessagingWindow& window, HICON hIcon);
     ~TrayIcon() noexcept;
 
-    void Show();
-    void Hide();
+    tl::expected<void, WindowsError> Show();
+    tl::expected<void, WindowsError> Hide();
 
     void SetLButtonUpHandler(TrayEventHandler handler) noexcept;
 
