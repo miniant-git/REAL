@@ -18,7 +18,7 @@ public:
 
 private:
     NOTIFYICONDATA m_data;
-    MessagingWindow m_window;
+    MessagingWindow& m_window;
     TrayEventHandler m_lButtonUpHandler;
     bool m_shown = false;
 };
