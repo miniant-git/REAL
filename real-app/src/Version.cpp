@@ -16,11 +16,13 @@ std::string Version::ToString() const {
 }
 
 bool Version::operator< (const Version& rhs) const noexcept {
-    if (m_major != rhs.m_major)
+    if (m_major != rhs.m_major) {
         return m_major < rhs.m_major;
+    }
 
-    if (m_minor != rhs.m_minor)
+    if (m_minor != rhs.m_minor) {
         return m_minor < rhs.m_minor;
+    }
 
     return m_patch < rhs.m_patch;
 }
@@ -45,27 +47,29 @@ bool Version::operator>=(const Version& rhs) const noexcept {
     return *this == rhs || *this > rhs;
 }
 
-std::optional<Version> Version::Parse(const std::string& versionString) {
+tl::expected<Version, VersionError> Version::Parse(const std::string& versionString) {
     std::smatch matches;
-    if (!std::regex_match(versionString, matches, VERSION_PATTERN))
-        return {};
+    if (!std::regex_match(versionString, matches, VERSION_PATTERN)) {
+        return tl::make_unexpected(VersionError("Failed to parse version string."));
+    }
 
     int major = std::stoi(matches[1].str());
     int minor = std::stoi(matches[2].str());
     int patch = std::stoi(matches[3].str());
-    if (major > UINT16_MAX || minor > UINT16_MAX || patch > UINT16_MAX)
-        return {};
+    if (major > UINT16_MAX || minor > UINT16_MAX || patch > UINT16_MAX) {
+        return tl::make_unexpected(VersionError("Failed to parse version string."));
+    }
 
-    return { Version(
+    return Version(
         static_cast<uint16_t>(major),
         static_cast<uint16_t>(minor),
-        static_cast<uint16_t>(patch)) };
+        static_cast<uint16_t>(patch));
 }
 
-std::optional<Version> Version::Find(const std::string& string) {
+tl::expected<Version, VersionError> Version::Find(const std::string& string) {
     std::smatch matches;
     if (!std::regex_search(string, matches, VERSION_PATTERN))
-        return {};
+        return tl::make_unexpected(VersionError("String does not contain properly formatted version."));
 
     return Version::Parse(matches[0].str());
 }

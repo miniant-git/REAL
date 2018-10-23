@@ -2,6 +2,6 @@
 
 using namespace miniant::CurlWrapper;
 
-long CurlWriter::InitiateRequest(CurlHandle& handle) {
+tl::expected<long, CurlError> CurlWriter::InitiateRequest(CurlHandle& handle) {
     return handle.Perform(GetWriteData(), GetWriteCallback());
 }

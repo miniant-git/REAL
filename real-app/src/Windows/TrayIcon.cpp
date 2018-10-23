@@ -1,6 +1,5 @@
 #include "TrayIcon.h"
 
-#include "Exception.h"
 #include "GlobalWindowProcedure.h"
 
 using namespace miniant::Windows;
@@ -38,33 +37,35 @@ TrayIcon::~TrayIcon() noexcept {
     ::Shell_NotifyIcon(NIM_DELETE, &m_data);
 }
 
-void TrayIcon::Show() {
+tl::expected<void, WindowsError> TrayIcon::Show() {
     if (m_shown) {
-        return;
+        return {};
     }
 
     if (!::Shell_NotifyIcon(NIM_ADD, &m_data)) {
-        throw Exception();
+        return tl::make_unexpected(WindowsError());
     }
 
     if (!::Shell_NotifyIcon(NIM_SETVERSION, &m_data)) {
         ::Shell_NotifyIcon(NIM_DELETE, &m_data);
-        throw Exception();
+        return tl::make_unexpected(WindowsError());
     }
 
     m_shown = true;
+    return {};
 }
 
-void TrayIcon::Hide() {
+tl::expected<void, WindowsError> TrayIcon::Hide() {
     if (!m_shown) {
-        return;
+        return {};
     }
 
     if (!::Shell_NotifyIcon(NIM_DELETE, &m_data)) {
-        throw Exception();
+        return tl::make_unexpected(WindowsError());
     }
 
     m_shown = false;
+    return {};
 }
 
 void TrayIcon::SetLButtonUpHandler(TrayEventHandler handler) noexcept {

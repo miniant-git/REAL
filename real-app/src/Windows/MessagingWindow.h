@@ -1,5 +1,9 @@
 #pragma once
 
+#include "WindowsError.h"
+
+#include <tl/expected.hpp>
+
 #include <Windows.h>
 
 #include <functional>
@@ -12,14 +16,21 @@ class MessagingWindow {
 public:
     using EventHandler = std::function<std::optional<LRESULT>(MessagingWindow&, WPARAM, LPARAM)>;
 
-    MessagingWindow();
-    ~MessagingWindow() noexcept;
+    MessagingWindow(MessagingWindow&& other);
+    ~MessagingWindow();
+
+    MessagingWindow& operator= (MessagingWindow&& rhs);
 
     HWND GetHWindow() noexcept;
 
     void SetEventHandler(UINT event, EventHandler handler);
 
+    static tl::expected<MessagingWindow, WindowsError> Create();
+    static tl::expected<std::unique_ptr<MessagingWindow>, WindowsError> CreatePtr();
+
 private:
+    MessagingWindow(HWND hWnd);
+
     HWND m_hWnd;
     std::unordered_map<UINT, EventHandler> m_eventHandlerMap;
 };

@@ -1,10 +1,18 @@
 #pragma once
 
+#include "ExpectedError.h"
+
+#include <tl/expected.hpp>
+
 #include <cinttypes>
-#include <string>
-#include <optional>
 
 namespace miniant::AutoUpdater {
+
+class VersionError : public ExpectedError {
+public:
+    explicit VersionError(const char* message):
+        ExpectedError(message) {}
+};
 
 class Version {
 public:
@@ -23,8 +31,8 @@ public:
     bool operator> (const Version& rhs) const noexcept;
     bool operator>=(const Version& rhs) const noexcept;
 
-    static std::optional<Version> Parse(const std::string& versionString);
-    static std::optional<Version> Find(const std::string& string);
+    static tl::expected<Version, VersionError> Parse(const std::string& versionString);
+    static tl::expected<Version, VersionError> Find(const std::string& string);
 
 private:
     uint16_t m_major;
