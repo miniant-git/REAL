@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AutoUpdater.cpp" />
+    <ClCompile Include="src\CurlWrapper\CurlError.cpp" />
     <ClCompile Include="src\CurlWrapper\CurlHandle.cpp" />
     <ClCompile Include="src\CurlWrapper\Writers\CurlFileWriter.cpp" />
     <ClCompile Include="src\CurlWrapper\Writers\CurlMemoryWriter.cpp" />

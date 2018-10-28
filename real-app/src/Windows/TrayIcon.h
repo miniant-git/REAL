@@ -2,6 +2,8 @@
 
 #include "MessagingWindow.h"
 
+#include <shellapi.h>
+
 namespace miniant::Windows {
 
 class TrayIcon {

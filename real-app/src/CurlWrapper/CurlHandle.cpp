@@ -1,5 +1,7 @@
 #include "CurlHandle.h"
 
+#include <curl/curl.h>
+
 #include <cassert>
 
 using namespace miniant;
@@ -113,4 +115,12 @@ tl::expected<CurlHandle, CurlError> CurlHandle::Create() {
     }
 
     return CurlHandle(curl, std::move(errorBuffer));
+}
+
+void CurlHandle::InitialiseCurl() {
+    curl_global_init(CURL_GLOBAL_ALL);
+}
+
+void CurlHandle::CleanupCurl() {
+    curl_global_cleanup();
 }

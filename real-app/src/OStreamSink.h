@@ -1,8 +1,5 @@
 #pragma once
 
-// Work-around for compilation error caused by spdlog using Windows headers
-#include <Windows.h>
-
 #include <spdlog/sinks/base_sink.h>
 
 #include <mutex>

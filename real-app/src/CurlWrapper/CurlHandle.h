@@ -2,7 +2,6 @@
 
 #include "CurlError.h"
 
-#include <curl/curl.h>
 #include <tl/expected.hpp>
 
 #include <memory>
@@ -28,10 +27,13 @@ public:
 
     static tl::expected<CurlHandle, CurlError> Create();
 
-private:
-    explicit CurlHandle(CURL* curl, std::unique_ptr<char[]>&& errorBuffer) noexcept;
+    static void InitialiseCurl();
+    static void CleanupCurl();
 
-    CURL* m_curl;
+private:
+    explicit CurlHandle(void* curl, std::unique_ptr<char[]>&& errorBuffer) noexcept;
+
+    void* m_curl;
     std::unique_ptr<char[]> m_errorBuffer;
 };
 

@@ -1,5 +1,7 @@
 #include "Filesystem.h"
 
+#include <Windows.h>
+
 #include <memory>
 #include <regex>
 
@@ -204,10 +206,12 @@ bool CanWriteTo(const WindowsString& path) {
     return CanAccess(path, GENERIC_WRITE);
 }
 
+#undef DeleteFile
 bool DeleteFile(const WindowsString& filepath) {
     return ExecuteCommand(GetDeleteCommand(filepath), !CanWriteTo(filepath));
 }
 
+#undef MoveFile
 bool MoveFile(const WindowsString& source, const WindowsString& destination) {
     std::optional<WindowsString> parentDirectory = GetParentDirectory(destination);
     return ExecuteCommand(
@@ -219,7 +223,11 @@ bool RenameFile(const WindowsString& source, const WindowsString& newName) {
     return ExecuteCommand(GetRenameCommand(source, newName), !CanWriteTo(source));
 }
 
+#pragma push_macro("CreateDirectory")
+#undef CreateDirectory
 bool CreateDirectory(const WindowsString& path) {
+#pragma pop_macro("CreateDirectory")
+
     if (IsDirectory(path))
         return true;
 
