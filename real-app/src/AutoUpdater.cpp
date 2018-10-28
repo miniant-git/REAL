@@ -77,7 +77,7 @@ tl::expected<std::string, AutoUpdaterError> FindUpdateAssetUrl(const json& respo
 }
 
 WindowsString GetAppTempDirectory() {
-    return GetTempDirectory() + TEXT("miniant\\REAL\\");
+    return GetTempDirectory() + L"miniant\\REAL\\";
 }
 
 tl::expected<std::string, AutoUpdaterError> GetReleaseNotes(const json& body) {
@@ -97,14 +97,14 @@ tl::expected<std::string, AutoUpdaterError> GetReleaseNotes(const json& body) {
 }
 
 AutoUpdater::AutoUpdater() {
-    curl_global_init(CURL_GLOBAL_ALL);
+    CurlHandle::InitialiseCurl();
 }
 AutoUpdater::~AutoUpdater() {
-    curl_global_cleanup();
+    CurlHandle::CleanupCurl();
 }
 
 tl::expected<bool, AutoUpdaterError> AutoUpdater::CleanupPreviousSetup() {
-    const WindowsString executableToDelete = GetExecutablePath() + TEXT("~DELETE");
+    const WindowsString executableToDelete = GetExecutablePath() + L"~DELETE";
     if (IsFile(executableToDelete)) {
         if (!DeleteFile(executableToDelete)) {
             return tl::make_unexpected(AutoUpdaterError("Could not delete temporary file."));
@@ -157,7 +157,7 @@ tl::expected<void, AutoUpdaterError> AutoUpdater::ApplyUpdate(const UpdateInfo& 
         return tl::make_unexpected(AutoUpdaterError("Could not create temporary app directory."));
     }
 
-    std::filesystem::path updateFile(tempDirectory + TEXT("update.zip"));
+    std::filesystem::path updateFile(tempDirectory + L"update.zip");
     CurlFileWriter fileWriter(updateFile);
     fileWriter.InitiateRequest(*curl);
     fileWriter.Close();
@@ -168,11 +168,11 @@ tl::expected<void, AutoUpdaterError> AutoUpdater::ApplyUpdate(const UpdateInfo& 
         return tl::make_unexpected(AutoUpdaterError("Could not get the application's executable file directory."));
     }
 
-    WindowsString renameCommand = GetRenameCommand(executable, TEXT("REAL.exe~DELETE"));
+    WindowsString renameCommand = GetRenameCommand(executable, L"REAL.exe~DELETE");
     WindowsString extractCommand = GetExtractZipCommand(updateFile, *executableDirectory);
     WindowsString deleteCommand = GetDeleteCommand(updateFile);
     if (!ExecuteCommand(
-        renameCommand + TEXT(" && ") + extractCommand + TEXT(" && ") + deleteCommand,
+        renameCommand + L" && " + extractCommand + L" && " + deleteCommand,
         !CanWriteTo(executable) || !CanWriteTo(*executableDirectory))) {
         return tl::make_unexpected(AutoUpdaterError("A filesystem error was encountered during the update procedure."));
     }

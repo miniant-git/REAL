@@ -1,14 +1,16 @@
 #pragma once
 
-#include <Windows.h>
-
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace miniant::Windows::Filesystem {
 
-using WindowsString = std::basic_string<TCHAR>;
+#ifdef _UNICODE
+using WindowsString = std::wstring;
+#else
+using WindowsString = std::string;
+#endif
 
 WindowsString WrapInDoubleQuotes(const WindowsString& string);
 bool ExecuteCommand(const WindowsString& command, bool asAdministrator);
