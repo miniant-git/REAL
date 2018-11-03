@@ -7,7 +7,7 @@ for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio
 if exist curl-src rmdir curl-src /s /q
 git clone https://github.com/curl/curl.git curl-src || goto :error
 cd curl-src
-git checkout tags/curl-7_61_1 || goto :error
+git checkout tags/curl-7_62_0 || goto :error
 call "buildconf.bat"
 call "%InstallDir%\VC\Auxiliary\Build\vcvars64.bat"
 cd winbuild && nmake /f Makefile.vc mode=static VC=15 MACHINE=x64
