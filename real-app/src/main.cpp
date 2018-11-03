@@ -56,7 +56,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     auto app_out = std::make_shared<spdlog::logger>("app_out", sink);
     app_out->set_pattern("%v");
     spdlog::register_logger(app_out);
-    app_out->info("Minimum audio latency enabled on the DEFAULT playback device!\n");
 
     auto console = std::make_shared<Console>([=] {
         std::lock_guard<std::mutex> lock(sink->GetMutex());
