@@ -6,7 +6,7 @@
 #include "Windows/MessagingWindow.h"
 #include "Windows/TrayIcon.h"
 
-#include "../resource.h"
+#include "../res/resource.h"
 
 #include <spdlog/spdlog.h>
 
