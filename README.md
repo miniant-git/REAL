@@ -28,10 +28,11 @@
 ## Building
 
 1. Make sure **Microsoft Visual Studio 2017** is installed and updated.
-2. Clone the repository: `git clone https://github.com/miniant-git/REAL.git miniant-real`
-3. Open `miniant-real.sln` solution and install any missing Visual Studio components.
-4. Download `curl` sources by launching `setup.bat` from `/real-app/deps/curl/`.
-5. Right-click on the `miniant-real` project in the **Solution Explorer** and select **Build**.
+2. Download and install [CMake](https://cmake.org/download/).
+3. Clone the repository: `git clone https://github.com/miniant-git/REAL.git miniant-real`
+4. Configure CMake project by launching `miniant-real.bat` in `real-app/` directory.
+5. Open generated `real-app/build/real-app.sln` solution.
+6. Right-click on the `real-app` project in the **Solution Explorer** and select **Build**.
 
 ## Features
 
