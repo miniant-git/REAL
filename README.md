@@ -28,10 +28,21 @@
 ## Building
 
 1. Make sure **Microsoft Visual Studio 2017** is installed and updated.
-2. Download and install [CMake](https://cmake.org/download/).
-3. Clone the repository: `git clone https://github.com/miniant-git/REAL.git miniant-real`
-4. Configure CMake project by launching `miniant-real.bat` in `real-app/` directory.
-5. Open generated `real-app/build/real-app.sln` solution.
+2. Install [CMake 3.12](https://cmake.org/download/) or later and configure your `PATH` environment variable to find `cmake` if necessary.
+3. Clone the repository:
+    ```bat
+    git clone https://github.com/miniant-git/REAL.git miniant-real
+    cd miniant-real
+    ```
+4. Configure Visual Studio project with CMake:
+   ```bat
+   cd real-app
+   ./run-cmake.bat
+   ```
+5. Open the generated solution:
+   ```bat
+   start build/miniant-real.sln
+   ```
 6. Right-click on the `real-app` project in the **Solution Explorer** and select **Build**.
 
 ## Features
