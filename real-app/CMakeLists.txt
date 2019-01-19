@@ -5,7 +5,7 @@ project(miniant-real)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
-FILE(GLOB_RECURSE REAL_APP_INPUT *.cpp *.h *.rc)
+FILE(GLOB_RECURSE REAL_APP_INPUT src/*.cpp src/*.h res/*.rc res/*.h)
 add_executable(real-app WIN32 ${REAL_APP_INPUT})
 
 target_compile_definitions(real-app PUBLIC _UNICODE UNICODE)
