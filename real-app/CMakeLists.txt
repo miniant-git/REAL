@@ -9,6 +9,7 @@ FILE(GLOB_RECURSE REAL_APP_INPUT src/*.cpp src/*.h res/*.rc res/*.h)
 add_executable(real-app WIN32 ${REAL_APP_INPUT})
 
 target_compile_definitions(real-app PUBLIC _UNICODE UNICODE)
+target_compile_options(real-app PRIVATE /JMC)
 
 set(CMAKE_PREFIX_PATH "deps")
 
