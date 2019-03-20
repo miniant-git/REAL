@@ -24,6 +24,7 @@ public:
     HWND GetHWindow() noexcept;
 
     void SetEventHandler(UINT event, EventHandler handler);
+    void RemoveEventHandler(UINT event);
 
     static tl::expected<MessagingWindow, WindowsError> Create();
     static tl::expected<std::unique_ptr<MessagingWindow>, WindowsError> CreatePtr();
