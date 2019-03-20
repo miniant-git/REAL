@@ -33,7 +33,7 @@ TrayIcon::TrayIcon(MessagingWindow& window, HICON hIcon):
 }
 
 TrayIcon::~TrayIcon() noexcept {
-    m_window.SetEventHandler(m_data.uCallbackMessage, nullptr);
+    m_window.RemoveEventHandler(m_data.uCallbackMessage);
     ::Shell_NotifyIcon(NIM_DELETE, &m_data);
 }
 

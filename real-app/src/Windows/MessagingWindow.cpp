@@ -123,3 +123,8 @@ void MessagingWindow::SetEventHandler(UINT event, EventHandler handler) {
     assert(handler);
     m_eventHandlerMap[event] = std::move(handler);
 }
+
+void MessagingWindow::RemoveEventHandler(UINT event) {
+    size_t numElementsRemoved = m_eventHandlerMap.erase(event);
+    assert(numElementsRemoved > 0);
+}
