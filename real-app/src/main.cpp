@@ -96,7 +96,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         console->Open();
     }
 
-    app_out->info("REAL - REduce Audio Latency {}, mini)(ant, 2018", APP_VERSION.ToString());
+    app_out->info("REAL - REduce Audio Latency {}, mini)(ant, 2018-2019", APP_VERSION.ToString());
     app_out->info("Project: https://github.com/miniant-git/REAL\n");
 
     auto audioClient = MinimumLatencyAudioClient::Start();
