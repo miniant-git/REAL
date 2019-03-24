@@ -33,8 +33,8 @@ void WaitForAnyKey(const std::string& message) {
     _getch();
 }
 
-void DisplayExitMessage(int errorCode) {
-    if (errorCode == 0) {
+void DisplayExitMessage(bool success) {
+    if (success) {
         WaitForAnyKey("\nPress any key to disable and exit . . .");
     } else {
         WaitForAnyKey("\nPress any key to exit . . .");
@@ -68,7 +68,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     std::unique_ptr<TrayIcon> trayIcon;
 
     std::wstring commandLine(pCmdLine);
-    int errorCode = 0;
+    bool success = true;
 
     if (commandLine == COMMAND_LINE_OPTION_TRAY) {
         tl::expected windowPtrResult = MessagingWindow::CreatePtr();
@@ -76,17 +76,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #pragma push_macro("GetMessage")
 #undef GetMessage
             app_out->error("Error: {}", windowPtrResult.error().GetMessage());
-            return errorCode;
+            return 1;
         }
 
         window = std::move(*windowPtrResult);
         HICON hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
         trayIcon = std::make_unique<TrayIcon>(*window, hIcon);
-        trayIcon->SetLButtonUpHandler([=, &errorCode](TrayIcon& trayIcon) {
+        trayIcon->SetLButtonUpHandler([=, &success](TrayIcon& trayIcon) {
             trayIcon.Hide();
             console->Open();
 
-            DisplayExitMessage(errorCode);
+            DisplayExitMessage(success);
 
             console->Close();
             return std::optional<LRESULT>();
@@ -99,11 +99,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     app_out->info("REAL - REduce Audio Latency {}, mini)(ant, 2018", APP_VERSION.ToString());
     app_out->info("Project: https://github.com/miniant-git/REAL\n");
 
-    errorCode = MinimumLatencyAudioClient().Start();
-    if (errorCode == 0) {
-        app_out->info("Minimum audio latency enabled on the DEFAULT playback device!\n");
+    auto audioClient = MinimumLatencyAudioClient::Start();
+    if (!audioClient) {
+        success = false;
+        app_out->info("ERROR: Could not enable low-latency mode.\n");
     } else {
-        app_out->info("ERROR: Could not enable low-latency mode. Error code {}.\n", errorCode);
+        app_out->info("Minimum audio latency enabled on the DEFAULT playback device!\n");
+        auto properties = audioClient->GetProperties();
+        if (properties) {
+            app_out->info(
+                "Device properties:\n    Sample rate{:.>16} Hz\n    Buffer size (min){:.>10} samples ({} ms) [current]\n    Buffer size (max){:.>10} samples ({} ms)\n    Buffer size (default){:.>6} samples ({} ms)\n",
+                properties->sampleRate,
+                properties->minimumBufferSize, 1000.0f * properties->minimumBufferSize / properties->sampleRate,
+                properties->maximumBufferSize, 1000.0f * properties->maximumBufferSize / properties->sampleRate,
+                properties->defaultBufferSize, 1000.0f * properties->defaultBufferSize / properties->sampleRate);
+        }
     }
 
     app_out->info("Checking for updates...");
@@ -139,8 +149,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             app_out->info("No: Keeping the current version.");
         }
 
-        DisplayExitMessage(errorCode);
-        return errorCode;
+        DisplayExitMessage(success);
+        return 2;
     } else {
         app_out->info("The application is up-to-date.");
     }
@@ -153,8 +163,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             ::DispatchMessage(&msg);
         }
     } else {
-        DisplayExitMessage(errorCode);
+        DisplayExitMessage(success);
     }
 
-    return errorCode;
+    return 0;
 }
