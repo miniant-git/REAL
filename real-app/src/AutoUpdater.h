@@ -30,6 +30,8 @@ public:
     AutoUpdater();
     ~AutoUpdater();
 
+    std::optional<std::string> IsAppSuperseded();
+
     tl::expected<bool, AutoUpdaterError> CleanupPreviousSetup();
     tl::expected<UpdateInfo, AutoUpdaterError> GetUpdateInfo() const;
     tl::expected<void, AutoUpdaterError> ApplyUpdate(const UpdateInfo& info) const;
