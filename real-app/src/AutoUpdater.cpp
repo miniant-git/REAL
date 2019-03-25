@@ -103,6 +103,34 @@ AutoUpdater::~AutoUpdater() {
     CurlHandle::CleanupCurl();
 }
 
+std::optional<std::string> AutoUpdater::IsAppSuperseded() {
+    tl::expected curl = CurlHandle::Create();
+    if (!curl) {
+        return {};
+    }
+
+    curl->SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/superseded");
+    curl->SetUserAgent("real_updater_v1");
+
+    CurlMemoryWriter memoryWriter;
+    tl::expected responseCode = memoryWriter.InitiateRequest(*curl);
+    if (!responseCode) {
+        return {};
+    }
+
+    if (*responseCode != 200) {
+        return {};
+    }
+
+    json response = json::parse(memoryWriter.GetBuffer());
+    auto notes = GetReleaseNotes(response["body"]);
+    if (!notes) {
+        return {};
+    }
+
+    return *notes;
+}
+
 tl::expected<bool, AutoUpdaterError> AutoUpdater::CleanupPreviousSetup() {
     const WindowsString executableToDelete = GetExecutablePath() + L"~DELETE";
     if (IsFile(executableToDelete)) {

@@ -116,13 +116,27 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         }
     }
 
-    app_out->info("Checking for updates...");
     AutoUpdater updater;
     tl::expected cleanupResult = updater.CleanupPreviousSetup();
     if (!cleanupResult) {
         app_out->info("Error: {}", cleanupResult.error().GetMessage());
     }
 
+    if (auto notes = updater.IsAppSuperseded(); notes) {
+        if (trayIcon != nullptr) {
+            trayIcon->Hide();
+        }
+
+        console->Open();
+
+        app_out->info(*notes);
+
+        DisplayExitMessage(success);
+        console->Close();
+        return 0;
+    }
+
+    app_out->info("Checking for updates...");
     tl::expected info = updater.GetUpdateInfo();
     if (!info) {
         app_out->info("Error: {}", info.error().GetMessage());
