@@ -158,7 +158,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         std::cin.getline(line, 5);
         std::string prompt(ToLower(line));
         if (prompt == "y" || prompt == "yes") {
-            updater.ApplyUpdate(*info);
+            auto status = updater.ApplyUpdate(*info);
+            if (status) {
+                app_out->info("Updated successfully! Restart the application to apply changes.");
+            } else {
+                app_out->info("Update failed.");
+                app_out->info("Error: {}", status.error().GetMessage());
+            }
+
         } else {
             app_out->info("No: Keeping the current version.");
         }
