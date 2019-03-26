@@ -15,8 +15,8 @@ using json = nlohmann::json;
 
 tl::expected<std::tuple<Version, json>, AutoUpdaterError> GetUpdaterRelease(CurlHandle& curl) {
     curl.Reset();
-    curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v2");
-    curl.SetUserAgent("real_updater_v1");
+    curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/updater-v3");
+    curl.SetUserAgent("real_updater_v2");
 
     CurlMemoryWriter memoryWriter;
     tl::expected responseCode = memoryWriter.InitiateRequest(curl);
@@ -45,7 +45,7 @@ tl::expected<std::tuple<Version, json>, AutoUpdaterError> GetUpdateRelease(CurlH
 
     curl.Reset();
     curl.SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/latest");
-    curl.SetUserAgent("real_updater_v1");
+    curl.SetUserAgent("real_updater_v2");
 
     CurlMemoryWriter memoryWriter;
     tl::expected responseCode = memoryWriter.InitiateRequest(curl);
@@ -110,7 +110,7 @@ std::optional<std::string> AutoUpdater::IsAppSuperseded() {
     }
 
     curl->SetUrl("https://api.github.com/repos/miniant-git/REAL/releases/tags/superseded");
-    curl->SetUserAgent("real_updater_v1");
+    curl->SetUserAgent("real_updater_v2");
 
     CurlMemoryWriter memoryWriter;
     tl::expected responseCode = memoryWriter.InitiateRequest(*curl);
