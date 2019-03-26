@@ -185,7 +185,7 @@ tl::expected<void, AutoUpdaterError> AutoUpdater::ApplyUpdate(const UpdateInfo& 
         return tl::make_unexpected(AutoUpdaterError("Could not create temporary app directory."));
     }
 
-    std::filesystem::path updateFile(tempDirectory + L"update.zip");
+    std::filesystem::path updateFile(tempDirectory + L"update");
     CurlFileWriter fileWriter(updateFile);
     fileWriter.InitiateRequest(*curl);
     fileWriter.Close();
@@ -196,11 +196,13 @@ tl::expected<void, AutoUpdaterError> AutoUpdater::ApplyUpdate(const UpdateInfo& 
         return tl::make_unexpected(AutoUpdaterError("Could not get the application's executable file directory."));
     }
 
-    WindowsString renameCommand = GetRenameCommand(executable, L"REAL.exe~DELETE");
+    WindowsString renameExecutableCommand = GetRenameCommand(executable, L"REAL.exe~DELETE");
+    WindowsString renameZipCommand = GetRenameCommand(updateFile, L"update.zip");
+    updateFile.replace_extension(".zip");
     WindowsString extractCommand = GetExtractZipCommand(updateFile, *executableDirectory);
     WindowsString deleteCommand = GetDeleteCommand(updateFile);
     if (!ExecuteCommand(
-        renameCommand + L" && " + extractCommand + L" && " + deleteCommand,
+        renameExecutableCommand + L" && " + renameZipCommand + L" && " + extractCommand + L" && " + deleteCommand,
         !CanWriteTo(executable) || !CanWriteTo(*executableDirectory))) {
         return tl::make_unexpected(AutoUpdaterError("A filesystem error was encountered during the update procedure."));
     }
