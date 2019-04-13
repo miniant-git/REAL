@@ -58,7 +58,7 @@ tl::expected<std::tuple<Version, json>, AutoUpdaterError> GetUpdateRelease(CurlH
     }
 
     json response = json::parse(memoryWriter.GetBuffer());
-    tl::expected latestVersion = Version::Parse(response["tag_name"]);
+    tl::expected latestVersion = Version::Find(response["name"]);
     if (!latestVersion) {
         return tl::make_unexpected(AutoUpdaterError(latestVersion.error()));
     }
