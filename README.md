@@ -2,6 +2,12 @@
 
 ---
 
+## Features
+
+* Audio latency reduction on the default playback device
+* Automatic updates
+* Starting minimised
+
 ## Requirements
 
 * Windows 10 64-bit
@@ -9,7 +15,7 @@
 
 ## Setup
 
-1. Install Windows' in-box HDAudio driver (recommended):
+1. Install Windows' in-box HDAudio driver (optional, might improve latency):
     1. Start **Device Manager**.
     2. Under **Sound, video and game controllers**, double click on the device that corresponds to your speakers.
     3. In the next window, go to the **Driver** tab.
@@ -19,11 +25,11 @@
     7. Select **Close**.
     8. If asked to reboot the system, select **Yes** to reboot.
     > **Be careful**: the new driver might reset your volume to uncomfortably high levels. 
-2. Download and install the [latest version](https://github.com/miniant-git/REAL/releases/latest) of **REAL**. If using the provided installer:
-    1. Double-click on the downloaded file.
-    2. Select **More info** -> **Run anyway**.
-    3. Follow the installation steps. By default the executable will be installed in `C:\Program Files\miniant\REAL\`. 
-3. Launch `REAL.exe`. The latency reduction is in effect as long as the application is open.
+2. Download the [latest version](https://github.com/miniant-git/REAL/releases/latest) of **REAL**.
+3. Launch `REAL.exe`. The latency reduction is in effect as long as the application is kept running.
+
+## Command-Line Options
+* `--tray` Launches the application minimised to the system tray
 
 ## Building
 
@@ -44,25 +50,7 @@
    start build/miniant-real.sln
    ```
 6. Right-click on the `real-app` project in the **Solution Explorer** and select **Build**.
-
-## Features
-
-- [ ] Audio latency reduction
-    - [x] Reduce to minimum that's supported by the driver
-    - [ ] Set custom audio buffer size
-    - [ ] Per-device support
-        - [x] Default playback device
-        - [ ] User-specified device
-        - [ ] Multiple devices at once
-- [ ] Graphical user interface
-    - [ ] Minimise to tray
-    - [ ] Start minimised
-- [ ] Automatic updates
-    - [x] Check for updates
-    - [x] Download and apply latest update
-    - [x] Show changelog
-    - [ ] Remember to always/never update
-    - [ ] Custom update check interval
+   * The resulting executable will be placed inside `real-app/build/Debug/` folder.
 
 ## FAQ
 
@@ -72,4 +60,4 @@ As described in Mirosoft's [Low Latency Audio FAQ section](https://docs.microsof
 
 ### What are the downsides?
 
-Since the application reduces audio buffer size, the CPU has less time to sleep until the buffer needs to be refilled, which technically results in increased power usage. In addition, small buffer size gives the CPU not much time to refill it and might cause audible cracks and glitches when the CPU is unable to keep up.
+Since the application reduces audio sample buffer size, the buffer runs out faster and needs to be refilled more frequently. This increases the odds of audible audio cracks appearing when the CPU is busy and unable to keep up. 
