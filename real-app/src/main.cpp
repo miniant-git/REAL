@@ -21,7 +21,7 @@ using namespace miniant::Spdlog;
 using namespace miniant::Windows;
 using namespace miniant::Windows::WasapiLatency;
 
-constexpr Version APP_VERSION(0, 1, 3);
+constexpr Version APP_VERSION(0, 2, 0);
 constexpr TCHAR COMMAND_LINE_OPTION_TRAY[] = TEXT("--tray");
 
 void WaitForAnyKey(const std::string& message) {
