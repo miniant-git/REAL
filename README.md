@@ -56,7 +56,7 @@
 
 ### How does this work?
 
-As described in Microsoft's [Low Latency Audio FAQ section](https://docs.microsoft.com/en-us/windows-hardware/drivers/audio/low-latency-audio#span-idfaqspanspan-idfaqspanfaq), by default, all applications in Windows 10 use 10ms buffers to render audio. However, if one application requests the usage of small buffers, then the Audio Engine will start transferring audio using that particular buffer size. In that case, all applications that use the same endpoint (device) and mode (either exclusive or shared) will automatically switch to that small buffer size. We make use of this Audio Engine property by starting a rendering stream which requests the minimal buffer size that is supported by the audio driver.
+As described in Microsoft's [Low Latency Audio FAQ section](https://docs.microsoft.com/en-us/windows-hardware/drivers/audio/low-latency-audio#faq), by default, all applications in Windows 10 use 10ms buffers to render audio. However, if one application requests the usage of small buffers, then the Audio Engine will start transferring audio using that particular buffer size. In that case, all applications that use the same endpoint (device) and mode (either exclusive or shared) will automatically switch to that small buffer size. We make use of this Audio Engine property by starting a rendering stream which requests the minimal buffer size that is supported by the audio driver.
 
 ### What are the downsides?
 
